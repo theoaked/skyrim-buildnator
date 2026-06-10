@@ -63,26 +63,35 @@ function rollWeapon() {
   setItems("weapon", sample(pool, 1));
 }
 
-// Skills roll. The current weapon's governing skill is always included.
+function skillsConflict(a, b) {
+  return BUILD_DATA.skillConflicts.some((group) => group.includes(a) && group.includes(b));
+}
+
+// Skills roll. The current weapon's governing skill is always included, and
+// skills from the same conflict group never roll together.
 function rollSkills() {
   const required = state.weapon && state.weapon.items[0].skill;
-  if (!required) {
-    setItems("skills", sample(BUILD_DATA.skills, 3));
-    return;
+  const picked = [];
+  if (required) picked.push(BUILD_DATA.skills.find((s) => s.name === required));
+  for (const candidate of sample(BUILD_DATA.skills, BUILD_DATA.skills.length)) {
+    if (picked.length === 3) break;
+    if (picked.some((p) => p.name === candidate.name || skillsConflict(p.name, candidate.name))) continue;
+    picked.push(candidate);
   }
-  const requiredEntry = BUILD_DATA.skills.find((s) => s.name === required);
-  const rest = sample(BUILD_DATA.skills.filter((s) => s.name !== required), 2);
-  setItems("skills", [requiredEntry, ...rest]);
+  setItems("skills", picked);
 }
 
 // After a free weapon reroll, make sure its governing skill is among the
-// primary skills (swap a random one out). Only runs when skills are unlocked.
+// primary skills: swap out a conflicting skill if there is one, otherwise a
+// random one. Only runs when skills are unlocked.
 function reconcileSkillsWithWeapon() {
   const required = state.weapon.items[0].skill;
   if (!required || currentSkillNames().includes(required)) return;
   const requiredEntry = BUILD_DATA.skills.find((s) => s.name === required);
   const items = state.skills.items.slice();
-  items[Math.floor(Math.random() * items.length)] = requiredEntry;
+  let idx = items.findIndex((s) => skillsConflict(s.name, required));
+  if (idx === -1) idx = Math.floor(Math.random() * items.length);
+  items[idx] = requiredEntry;
   setItems("skills", items);
 }
 

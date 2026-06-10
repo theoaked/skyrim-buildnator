@@ -58,6 +58,12 @@ const BUILD_DATA = {
     { name: "Illusion" }, { name: "Restoration" }, { name: "Enchanting" },
   ],
 
+  // Skills in the same group compete in gameplay and never roll together.
+  skillConflicts: [
+    ["One-Handed", "Two-Handed"],
+    ["Heavy Armor", "Light Armor"],
+  ],
+
   standingStone: [
     { name: "The Warrior", description: "Combat skills improve 20% faster." },
     { name: "The Mage", description: "Magic skills improve 20% faster." },
