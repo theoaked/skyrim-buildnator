@@ -31,6 +31,22 @@ const BUILD_DATA = {
     { name: "Witchhunter", description: "Crossbow or bow, alchemy, and a grudge against everything magical." },
     { name: "Bard", description: "Charm, speechcraft, illusion — talk your way through Skyrim." },
     { name: "Pilgrim", description: "A wanderer visiting every shrine, surviving on wit and faith." },
+    { name: "Crusader", description: "Stendarr's hammer made flesh. Smite the profane wherever it hides." },
+    { name: "Knight", description: "Oath, honor, and a full set of plate. Chivalry isn't dead — you checked." },
+    { name: "Ranger", description: "Bow, light armor, and the wilds for a home. Cities make you itch." },
+    { name: "Hunter", description: "Track it, trap it, skin it, sell it. Hircine watches with approval." },
+    { name: "Druid", description: "Alchemy, alteration, and a deep distrust of anyone who lives indoors." },
+    { name: "Shaman", description: "Speak to the spirits, summon their wrath, wear their bones." },
+    { name: "Warlock", description: "Forbidden tomes, dark pacts, and a tower full of regrets (other people's)." },
+    { name: "Sellsword", description: "Loyalty has a price. Fortunately, so does everything else." },
+    { name: "Gladiator", description: "Born for the pit. Every bandit camp is an arena, every fight a show." },
+    { name: "Corsair", description: "A pirate stranded ashore. Loot coastal wrecks, drink mead, fear no man." },
+    { name: "Alchemist", description: "Poison the blade, drink the experiment, sell the leftovers." },
+    { name: "Healer", description: "A pacifist mender. Your allies do the killing — you keep them alive." },
+    { name: "Scout", description: "First in, never seen, already gone. The map fills itself." },
+    { name: "Treasure Hunter", description: "Every barrow has a hidden chest, and you have a shovel and no fear." },
+    { name: "Court Wizard", description: "Enchanting, alteration, and polite contempt for the Jarl's guests." },
+    { name: "Forsworn Outcast", description: "Fur, feathers, and fury. The Reach remembers what was taken." },
   ],
 
   skills: [
@@ -78,16 +94,18 @@ const BUILD_DATA = {
     { name: "Clothes Only", description: "No armor at all. Fashion over function. Good luck." },
   ],
 
+  // `skill` ties the weapon to a primary skill — the app guarantees that skill
+  // is among the rolled Primary Skills. Weapons without `skill` are unrestricted.
   weapon: [
-    { name: "Sword", description: "Fast, reliable, classic." },
-    { name: "War Axe", description: "Make them bleed." },
-    { name: "Mace", description: "Armor means nothing to you." },
-    { name: "Greatsword", description: "Elegant, enormous, exhausting." },
-    { name: "Battleaxe", description: "For when subtlety is not on the menu." },
-    { name: "Warhammer", description: "The biggest, slowest, most satisfying option." },
-    { name: "Dagger", description: "Small blade, huge sneak multipliers." },
-    { name: "Bow", description: "The ol' reliable of Skyrim." },
-    { name: "Crossbow", description: "Slow to reload, brutal on impact (Dawnguard)." },
+    { name: "Sword", description: "Fast, reliable, classic.", skill: "One-Handed" },
+    { name: "War Axe", description: "Make them bleed.", skill: "One-Handed" },
+    { name: "Mace", description: "Armor means nothing to you.", skill: "One-Handed" },
+    { name: "Greatsword", description: "Elegant, enormous, exhausting.", skill: "Two-Handed" },
+    { name: "Battleaxe", description: "For when subtlety is not on the menu.", skill: "Two-Handed" },
+    { name: "Warhammer", description: "The biggest, slowest, most satisfying option.", skill: "Two-Handed" },
+    { name: "Dagger", description: "Small blade, huge sneak multipliers.", skill: "One-Handed" },
+    { name: "Bow", description: "The ol' reliable of Skyrim.", skill: "Archery" },
+    { name: "Crossbow", description: "Slow to reload, brutal on impact (Dawnguard).", skill: "Archery" },
     { name: "Staff", description: "Channel destruction without lifting a spellbook." },
     { name: "Fists", description: "Weapons are a crutch." },
   ],
@@ -155,6 +173,13 @@ const BUILD_DATA = {
     { name: "Speak to every priest", description: "Visit and pray at every shrine you encounter." },
   ],
 
+  affliction: [
+    { name: "None", description: "A pure mortal. Sleep at night, walk in the sun, keep your soul." },
+    { name: "Werewolf", description: "The blood of Hircine runs in your veins. Beast Form when the hunt calls." },
+    { name: "Vampire", description: "A creature of the night. Feed regularly — or stop pretending to be one of them." },
+    { name: "Vampire Lord", description: "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard)." },
+  ],
+
   challenge: [
     { name: "Permadeath", description: "If you die, delete the save. Start over." },
     { name: "No HUD", description: "Disable the HUD. Navigate by landmarks and instinct." },
@@ -167,4 +192,48 @@ const BUILD_DATA = {
     { name: "No sprinting", description: "Dignified walking pace at all times." },
     { name: "No challenge", description: "The Divines smile upon you. Just enjoy the ride." },
   ],
+
+  // Lore-friendly name pools per race, used to roll the character's name + gender.
+  names: {
+    Nord: {
+      male: ["Bjorn", "Ulfgar", "Ragnar", "Sigurd", "Torvald", "Halvard", "Eirik", "Stennar"],
+      female: ["Astrid", "Sigrid", "Freydis", "Ingrid", "Helga", "Runa", "Thyra", "Gerdur"],
+    },
+    Imperial: {
+      male: ["Marcus", "Quintus", "Lucius", "Decimus", "Titus", "Cassius", "Varro", "Albano"],
+      female: ["Aurelia", "Livia", "Octavia", "Vittoria", "Camilla", "Carmella", "Faustina", "Severa"],
+    },
+    Breton: {
+      male: ["Tristan", "Alain", "Gaston", "Etienne", "Emeric", "Roland", "Maurice", "Cyrelian"],
+      female: ["Colette", "Yvette", "Margaux", "Elise", "Sybille", "Aurore", "Jeanne", "Mirabelle"],
+    },
+    Redguard: {
+      male: ["Cyrus", "Kematu", "Azhar", "Rashid", "Samir", "Jawanan", "Nazir", "Tahir"],
+      female: ["Saadia", "Zaynabi", "Tahirah", "Iman", "Rayya", "Nashita", "Umana", "Sahar"],
+    },
+    Altmer: {
+      male: ["Nelacar", "Quaranir", "Estormo", "Tandil", "Vingalmo", "Ondolemar", "Sanyon", "Rulindil"],
+      female: ["Niranye", "Taarie", "Endarie", "Nirya", "Alwen", "Cirwen", "Elenya", "Faralda"],
+    },
+    Bosmer: {
+      male: ["Faendal", "Anoriath", "Niruin", "Gwilin", "Malborn", "Elrindir", "Valindor", "Cuinanthil"],
+      female: ["Nimriel", "Nivenor", "Brelas", "Anwen", "Sylgja", "Lirielle", "Ardwen", "Galathil"],
+    },
+    Dunmer: {
+      male: ["Athis", "Sadri", "Romlyn", "Erandur", "Ralen", "Fethis", "Teldryn", "Drevis"],
+      female: ["Brelyna", "Dravynea", "Irileth", "Suvaris", "Aduri", "Avrusa", "Jenassa", "Voldsea"],
+    },
+    Orsimer: {
+      male: ["Ghorbash", "Yamarz", "Durak", "Ogol", "Mauhulakh", "Lurbuk", "Gat", "Urag"],
+      female: ["Borgakh", "Ugor", "Shel", "Gharol", "Bagrak", "Atub", "Mor", "Lash"],
+    },
+    Argonian: {
+      male: ["Veezara", "Derkeethus", "Jaree-Ra", "Madesi", "Neetrenaza", "Watches-The-Roots", "Scouts-Many-Marshes", "Teeba-Ei"],
+      female: ["Shahvee", "Keerava", "Wujeeta", "Deeja", "From-Deepest-Fathoms", "Hides-Her-Eyes", "Swims-In-Starlight", "Drips-No-Sap"],
+    },
+    Khajiit: {
+      male: ["J'zargo", "Kharjo", "Dro'marash", "Ra'jirr", "J'datharr", "Ma'dran", "Vasha", "Ri'saad"],
+      female: ["Ahkari", "Atahbah", "Khayla", "Tsavani", "Ra'zhinda", "Shuravi", "Kishra-do", "Ahjisi"],
+    },
+  },
 };
