@@ -57,6 +57,11 @@ function lockedStyleRequires() {
   return state.combatStyle.items[0].requires || {};
 }
 
+function lockedArmorRequires() {
+  if (!isLocked("armor")) return {};
+  return state.armor.items[0].requires || {};
+}
+
 function currentMagicSchools() {
   return state.magicSchools.items.map((i) => i.name).filter((n) => n !== "None");
 }
@@ -73,6 +78,8 @@ function rollWeapon() {
   const req = lockedStyleRequires();
   if (req.weaponName) pool = pool.filter((w) => w.name === req.weaponName);
   if (req.weaponSkill) pool = pool.filter((w) => w.skill === req.weaponSkill);
+  const armorReq = lockedArmorRequires();
+  if (armorReq.weaponSkillNot) pool = pool.filter((w) => !armorReq.weaponSkillNot.includes(w.skill));
   setItems("weapon", sample(pool, 1));
 }
 
@@ -89,9 +96,11 @@ function rollSkills() {
   if (weaponSkill) requiredNames.push(weaponSkill);
   const styleSkill = lockedStyleRequires().skill;
   if (styleSkill && !requiredNames.includes(styleSkill)) requiredNames.push(styleSkill);
+  const excluded = lockedStyleRequires().excludeSkills || [];
   const picked = requiredNames.map((n) => BUILD_DATA.skills.find((s) => s.name === n));
   for (const candidate of sample(BUILD_DATA.skills, BUILD_DATA.skills.length)) {
     if (picked.length === 3) break;
+    if (excluded.includes(candidate.name)) continue;
     if (picked.some((p) => p.name === candidate.name || skillsConflict(p.name, candidate.name))) continue;
     picked.push(candidate);
   }
@@ -99,14 +108,15 @@ function rollSkills() {
 }
 
 // Magic schools roll (0-2 schools). A locked combat style can force a
-// specific school in, or at least one school for anyMagic styles.
+// specific school in, or at least one school for anyMagic styles; locked
+// Mage Robes also demand at least one school.
 function rollMagicSchools() {
   const req = lockedStyleRequires();
   const mustHave = req.magicSchool
     ? [BUILD_DATA.magicSchools.find((s) => s.name === req.magicSchool)]
     : [];
   let n = Math.floor(Math.random() * 3);
-  if ((req.anyMagic || mustHave.length) && n === 0) n = 1;
+  if ((req.anyMagic || lockedArmorRequires().anyMagic || mustHave.length) && n === 0) n = 1;
   const rest = sample(
     BUILD_DATA.magicSchools.filter((s) => !mustHave.some((m) => m.name === s.name)),
     Math.max(0, n - mustHave.length)
@@ -122,6 +132,7 @@ function styleFits(style) {
   if (r.weaponName && weapon.name !== r.weaponName) return false;
   if (r.weaponSkill && weapon.skill !== r.weaponSkill) return false;
   if (r.skill && !currentSkillNames().includes(r.skill)) return false;
+  if (r.excludeSkills && currentSkillNames().some((s) => r.excludeSkills.includes(s))) return false;
   const schools = currentMagicSchools();
   if (r.magicSchool && !schools.includes(r.magicSchool)) return false;
   if (r.anyMagic && schools.length === 0) return false;
@@ -134,6 +145,27 @@ function rollCombatStyle() {
   setItems("combatStyle", sample(BUILD_DATA.combatStyle.filter(styleFits), 1));
 }
 
+// Armor rolls after weapon and magic schools: Mage Robes (and any future
+// conditional armor) only fit builds that meet their requirements.
+function armorFits(entry) {
+  const r = entry.requires || {};
+  if (r.anyMagic && currentMagicSchools().length === 0) return false;
+  if (r.weaponSkillNot && r.weaponSkillNot.includes(state.weapon.items[0].skill)) return false;
+  return true;
+}
+
+function rollArmor() {
+  setItems("armor", sample(BUILD_DATA.armor.filter(armorFits), 1));
+}
+
+// Roleplay rules roll after magic schools: rules flagged requiresMagic only
+// fit magic-oriented builds (at least one school rolled).
+function rollRoleplayRules() {
+  const hasMagic = currentMagicSchools().length > 0;
+  const pool = BUILD_DATA.roleplayRules.filter((r) => !r.requiresMagic || hasMagic);
+  setItems("roleplayRules", sample(pool, 2));
+}
+
 // Name + gender, drawn from the current race's name pool.
 function rollCharacter() {
   const race = state.race.items[0].name;
@@ -144,12 +176,59 @@ function rollCharacter() {
 }
 
 // Categories with custom roll logic, handled in dependency order below.
-const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "combatStyle"];
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules"];
+
+let narrativeText = "";
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function fill(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (_, key) => vars[key]);
+}
+
+// Compose a short backstory from the rolled build. Sentences are picked from
+// the template pools in BUILD_DATA.narrative.
+function buildNarrative() {
+  const N = BUILD_DATA.narrative;
+  const character = state.character.items[0];
+  const male = character.description.startsWith("Male");
+  const sk = currentSkillNames();
+  const weaponName = state.weapon.items[0].name;
+  const faction = state.faction.items[0].name;
+  const vars = {
+    name: character.name,
+    sub: male ? "he" : "she",
+    obj: male ? "him" : "her",
+    pos: male ? "his" : "her",
+    origin: N.origins[state.race.items[0].name],
+    archetype: state.archetype.items[0].name.toLowerCase(),
+    skills: sk.slice(0, -1).join(", ") + " and " + sk[sk.length - 1],
+    stone: state.standingStone.items[0].name,
+    weapon: weaponName === "Fists" ? "bare fists" : "the " + weaponName.toLowerCase(),
+    style: state.combatStyle.items[0].name.toLowerCase(),
+    deity: state.deity.items[0].name,
+    faction: faction,
+  };
+  vars.moral = fill(N.morals[state.morality.items[0].name], vars);
+
+  const sentences = [pick(N.openings), pick(N.paths), pick(N.creeds)];
+  const afflictionLine = N.afflictions[state.affliction.items[0].name];
+  if (afflictionLine) sentences.push(afflictionLine);
+  sentences.push(pick(faction === "None" ? N.fatesAlone : N.fates));
+
+  return sentences
+    .map((s) => fill(s, vars))
+    .join(" ")
+    .replace(/(^|\.\s+)([a-z])/g, (m, sep, ch) => sep + ch.toUpperCase());
+}
 
 function generateAll() {
   // Plain categories first (race before character), then the dependent chain:
   // weapon -> skills (must include the weapon's skill) -> magic schools ->
-  // combat style (picked from what the build supports) -> character name.
+  // armor and roleplay rules (both magic-aware) -> combat style (picked from
+  // what the build supports) -> character name -> backstory.
   for (const cat of CATEGORIES) {
     if (isLocked(cat.id) || SPECIAL_IDS.includes(cat.id)) continue;
     state[cat.id] = rollCategory(cat);
@@ -157,8 +236,11 @@ function generateAll() {
   if (!isLocked("weapon")) rollWeapon();
   if (!isLocked("skills")) rollSkills(); // locked skills need no fix: weapon roll was constrained to them
   if (!isLocked("magicSchools")) rollMagicSchools();
+  if (!isLocked("armor")) rollArmor();
+  if (!isLocked("roleplayRules")) rollRoleplayRules();
   if (!isLocked("combatStyle")) rollCombatStyle();
   if (!isLocked("character")) rollCharacter();
+  narrativeText = buildNarrative();
   render();
 }
 
@@ -168,6 +250,7 @@ function toggleLock(catId) {
 }
 
 function render() {
+  document.getElementById("narrative").textContent = narrativeText;
   const grid = document.getElementById("build-grid");
   grid.innerHTML = "";
   for (const cat of CATEGORIES) {
@@ -218,6 +301,7 @@ function buildSummary() {
     const names = state[cat.id].items.map((i) => i.name).join(", ");
     lines.push(cat.label + ": " + names);
   }
+  lines.push("", narrativeText);
   lines.push("", "Rolled at https://theoaked.github.io/skyrim-buildnator/");
   return lines.join("\n");
 }

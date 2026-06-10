@@ -100,6 +100,33 @@ main {
   padding: 0 1rem 3rem;
 }
 
+.narrative {
+  background: var(--bg-card);
+  border: 1px solid var(--gold);
+  padding: 1.4rem 1.8rem;
+  margin-bottom: 1.4rem;
+  clip-path: polygon(
+    12px 0, calc(100% - 12px) 0, 100% 12px,
+    100% calc(100% - 12px), calc(100% - 12px) 100%,
+    12px 100%, 0 calc(100% - 12px), 0 12px
+  );
+}
+
+.narrative h2 {
+  font-size: 0.8rem;
+  color: var(--gold);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.narrative p {
+  font-style: italic;
+  line-height: 1.65;
+  font-size: 1.08rem;
+}
+
 .build-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

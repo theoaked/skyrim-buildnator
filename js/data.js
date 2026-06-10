@@ -91,16 +91,18 @@ const BUILD_DATA = {
     { name: "Archery", description: "Death from a distance — preferably while sneaking.", requires: { weaponSkill: "Archery" } },
     { name: "Destruction Magic", description: "Fire, frost, and shock until nothing moves.", requires: { magicSchool: "Destruction" } },
     { name: "Conjuration Summons", description: "Let your minions do the dirty work.", requires: { magicSchool: "Conjuration" } },
-    { name: "Unarmed", description: "Fists only. Khajiit claws optional but recommended.", requires: { weaponName: "Fists" } },
+    { name: "Unarmed", description: "Fists only. Khajiit claws optional but recommended.", requires: { weaponName: "Fists", excludeSkills: ["One-Handed", "Two-Handed", "Archery"] } },
     { name: "Sneak Attacks", description: "30x dagger multipliers are a lifestyle.", requires: { skill: "Sneak" } },
     { name: "Spell & Blade", description: "Weapon in one hand, spell in the other.", requires: { weaponSkill: "One-Handed", anyMagic: true } },
     { name: "Shouts First", description: "FUS RO DAH is always the answer. Lead with the Voice." },
   ],
 
+  // Armor `requires` works like combat style requirements: Mage Robes only
+  // roll for casters whose weapon isn't a two-hander or a bow.
   armor: [
     { name: "Heavy Armor", description: "Walk slow, hit hard, fear nothing." },
     { name: "Light Armor", description: "Mobility and protection in balance." },
-    { name: "Mage Robes", description: "Enchanted cloth — your magicka is your armor." },
+    { name: "Mage Robes", description: "Enchanted cloth — your magicka is your armor.", requires: { anyMagic: true, weaponSkillNot: ["Two-Handed", "Archery"] } },
     { name: "Clothes Only", description: "No armor at all. Fashion over function. Good luck." },
   ],
 
@@ -181,6 +183,7 @@ const BUILD_DATA = {
     { name: "Return home weekly", description: "Visit your home (or an inn you call home) every in-game week." },
     { name: "No killing animals", description: "Wildlife is sacred. Run from wolves if you must." },
     { name: "Speak to every priest", description: "Visit and pray at every shrine you encounter." },
+    { name: "Born without magicka", description: "Your veins carry no magicka of your own — every spell must come from a staff or scroll.", requiresMagic: true },
   ],
 
   affliction: [
@@ -202,6 +205,59 @@ const BUILD_DATA = {
     { name: "No sprinting", description: "Dignified walking pace at all times." },
     { name: "No challenge", description: "The Divines smile upon you. Just enjoy the ride." },
   ],
+
+  // Sentence templates for the character backstory. Placeholders are filled
+  // from the rolled build: {name} {origin} {archetype} {skills} {stone}
+  // {weapon} {style} {deity} {faction} {moral} and pronouns {sub}/{obj}/{pos}.
+  narrative: {
+    origins: {
+      Nord: "under the bitter skies of Skyrim",
+      Imperial: "amid the bustle of Cyrodiil's great cities",
+      Breton: "in the feuding courts of High Rock",
+      Redguard: "on the scorched sands of Hammerfell",
+      Altmer: "in the gilded spires of the Summerset Isles",
+      Bosmer: "beneath the ancient boughs of Valenwood",
+      Dunmer: "in the ash-choked wastes of Morrowind",
+      Orsimer: "behind the palisades of an Orc stronghold",
+      Argonian: "among the misty marshes of Black Marsh",
+      Khajiit: "in a trade caravan crossing the deserts of Elsweyr",
+    },
+    openings: [
+      "{name} was born {origin}.",
+      "Born {origin}, {name} learned early that destiny favors the bold.",
+      "{name} first drew breath {origin}, beneath omens no priest could read.",
+    ],
+    paths: [
+      "The long road of the {archetype} shaped {obj}, honing {skills} through lean years and worse company.",
+      "Trained as a {archetype}, {sub} earned every scar while mastering {skills}.",
+      "Life as a {archetype} came at a price — one paid in full while learning {skills}.",
+    ],
+    creeds: [
+      "Under the sign of {stone}, {sub} trusts {weapon} above all, and {style} is less a tactic than a creed.",
+      "Blessed by {stone}, {sub} settles most arguments with {weapon} — {style}, always.",
+      "{stone} watches over {obj}; {weapon} does the talking, and {style} writes the ending.",
+    ],
+    afflictions: {
+      "Werewolf": "And when the moons rise, Hircine's blood howls in {pos} veins.",
+      "Vampire": "Since one cold night went wrong, {sub} thirsts in silence and keeps to the shadows before dawn.",
+      "Vampire Lord": "Harkon's gift runs in {pos} veins now — and the night kneels to its new lord.",
+    },
+    fates: [
+      "Sworn to {deity} and bound for {faction}, {sub} {moral}",
+      "With {deity}'s name on {pos} lips and an oath owed to {faction}, {sub} {moral}",
+    ],
+    fatesAlone: [
+      "Sworn to no banner, trusting only {deity}, {sub} {moral}",
+      "No guild holds {pos} oath; only {deity} hears {pos} prayers, and {sub} {moral}",
+    ],
+    morals: {
+      Saint: "walks Skyrim as its quiet conscience.",
+      Good: "tries to leave the world a little better — for a fair price.",
+      Neutral: "owes nothing to anyone, and intends to keep it that way.",
+      Selfish: "looks after number one; everyone else can hire a guard.",
+      Evil: "leaves burned villages and empty pockets in {pos} wake.",
+    },
+  },
 
   // Lore-friendly name pools per race, used to roll the character's name + gender.
   names: {
