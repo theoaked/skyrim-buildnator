@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skyrim Buildnator — Random Character Build Generator</title>
+  <meta name="description" content="Randomly generate your next Skyrim character build: race, archetype, skills, standing stone, roleplay rules and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>Skyrim Buildnator</h1>
+    <p class="subtitle">Your fate, decided by the Divines</p>
+    <div class="controls">
+      <button id="generate-btn" class="btn-primary">⚔ Generate Build ⚔</button>
+      <button id="copy-btn" class="btn-secondary">Copy Build</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="build-grid" class="build-grid" aria-live="polite"></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Lock 🔒 the parts you like, reroll 🎲 the rest.
+      &middot;
+      <a href="https://github.com/theoaked/skyrim-buildnator">Source on GitHub</a>
+    </p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
