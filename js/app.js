@@ -1,17 +1,17 @@
 // Skyrim Buildnator — randomization, lock/reroll logic, and rendering.
 
-// Display order. Categories with custom roll logic (character, skills, weapon)
-// are special-cased below; the rest roll generically from their pool.
+// Display order. Categories with custom roll logic (see SPECIAL_IDS) are
+// special-cased below; the rest roll generically from their pool.
 const CATEGORIES = [
   { id: "character", label: "Character" },
   { id: "race", label: "Race", pool: BUILD_DATA.race, count: 1 },
   { id: "archetype", label: "Archetype", pool: BUILD_DATA.archetype, count: 1 },
-  { id: "skills", label: "Primary Skills", pool: BUILD_DATA.skills, count: 3 },
+  { id: "skills", label: "Primary Skills" },
   { id: "standingStone", label: "Standing Stone", pool: BUILD_DATA.standingStone, count: 1 },
-  { id: "combatStyle", label: "Combat Style", pool: BUILD_DATA.combatStyle, count: 1 },
+  { id: "combatStyle", label: "Combat Style" },
   { id: "armor", label: "Armor", pool: BUILD_DATA.armor, count: 1 },
-  { id: "weapon", label: "Weapon of Choice", pool: BUILD_DATA.weapon, count: 1 },
-  { id: "magicSchools", label: "Magic Schools", pool: BUILD_DATA.magicSchools, count: () => Math.floor(Math.random() * 3) },
+  { id: "weapon", label: "Weapon of Choice" },
+  { id: "magicSchools", label: "Magic Schools" },
   { id: "affliction", label: "Affliction", pool: BUILD_DATA.affliction, count: 1 },
   { id: "faction", label: "Faction", pool: BUILD_DATA.faction, count: 1 },
   { id: "deity", label: "Deity", pool: BUILD_DATA.deity, count: 1 },
@@ -52,14 +52,27 @@ function currentSkillNames() {
   return state.skills.items.map((s) => s.name);
 }
 
-// Weapon roll. When the skills card is locked, only weapons compatible with
-// those skills may come up (unrestricted weapons like Fists/Staff always can).
+function lockedStyleRequires() {
+  if (!isLocked("combatStyle")) return {};
+  return state.combatStyle.items[0].requires || {};
+}
+
+function currentMagicSchools() {
+  return state.magicSchools.items.map((i) => i.name).filter((n) => n !== "None");
+}
+
+// Weapon roll, constrained by whatever is locked: a locked skills card only
+// allows compatible weapons (unrestricted ones like Fists/Staff always fit),
+// and a locked combat style enforces its weapon requirements.
 function rollWeapon() {
   let pool = BUILD_DATA.weapon;
   if (isLocked("skills")) {
     const skills = currentSkillNames();
     pool = pool.filter((w) => !w.skill || skills.includes(w.skill));
   }
+  const req = lockedStyleRequires();
+  if (req.weaponName) pool = pool.filter((w) => w.name === req.weaponName);
+  if (req.weaponSkill) pool = pool.filter((w) => w.skill === req.weaponSkill);
   setItems("weapon", sample(pool, 1));
 }
 
@@ -67,12 +80,16 @@ function skillsConflict(a, b) {
   return BUILD_DATA.skillConflicts.some((group) => group.includes(a) && group.includes(b));
 }
 
-// Skills roll. The current weapon's governing skill is always included, and
-// skills from the same conflict group never roll together.
+// Skills roll. The current weapon's governing skill and a locked combat
+// style's required skill are always included, and skills from the same
+// conflict group never roll together.
 function rollSkills() {
-  const required = state.weapon && state.weapon.items[0].skill;
-  const picked = [];
-  if (required) picked.push(BUILD_DATA.skills.find((s) => s.name === required));
+  const requiredNames = [];
+  const weaponSkill = state.weapon && state.weapon.items[0].skill;
+  if (weaponSkill) requiredNames.push(weaponSkill);
+  const styleSkill = lockedStyleRequires().skill;
+  if (styleSkill && !requiredNames.includes(styleSkill)) requiredNames.push(styleSkill);
+  const picked = requiredNames.map((n) => BUILD_DATA.skills.find((s) => s.name === n));
   for (const candidate of sample(BUILD_DATA.skills, BUILD_DATA.skills.length)) {
     if (picked.length === 3) break;
     if (picked.some((p) => p.name === candidate.name || skillsConflict(p.name, candidate.name))) continue;
@@ -81,18 +98,40 @@ function rollSkills() {
   setItems("skills", picked);
 }
 
-// After a free weapon reroll, make sure its governing skill is among the
-// primary skills: swap out a conflicting skill if there is one, otherwise a
-// random one. Only runs when skills are unlocked.
-function reconcileSkillsWithWeapon() {
-  const required = state.weapon.items[0].skill;
-  if (!required || currentSkillNames().includes(required)) return;
-  const requiredEntry = BUILD_DATA.skills.find((s) => s.name === required);
-  const items = state.skills.items.slice();
-  let idx = items.findIndex((s) => skillsConflict(s.name, required));
-  if (idx === -1) idx = Math.floor(Math.random() * items.length);
-  items[idx] = requiredEntry;
-  setItems("skills", items);
+// Magic schools roll (0-2 schools). A locked combat style can force a
+// specific school in, or at least one school for anyMagic styles.
+function rollMagicSchools() {
+  const req = lockedStyleRequires();
+  const mustHave = req.magicSchool
+    ? [BUILD_DATA.magicSchools.find((s) => s.name === req.magicSchool)]
+    : [];
+  let n = Math.floor(Math.random() * 3);
+  if ((req.anyMagic || mustHave.length) && n === 0) n = 1;
+  const rest = sample(
+    BUILD_DATA.magicSchools.filter((s) => !mustHave.some((m) => m.name === s.name)),
+    Math.max(0, n - mustHave.length)
+  );
+  const items = mustHave.concat(rest);
+  setItems("magicSchools", items.length ? items : [NONE_ENTRY]);
+}
+
+// A style fits when every requirement it declares holds for the current build.
+function styleFits(style) {
+  const r = style.requires || {};
+  const weapon = state.weapon.items[0];
+  if (r.weaponName && weapon.name !== r.weaponName) return false;
+  if (r.weaponSkill && weapon.skill !== r.weaponSkill) return false;
+  if (r.skill && !currentSkillNames().includes(r.skill)) return false;
+  const schools = currentMagicSchools();
+  if (r.magicSchool && !schools.includes(r.magicSchool)) return false;
+  if (r.anyMagic && schools.length === 0) return false;
+  return true;
+}
+
+// Combat style rolls last, from the styles the rest of the build supports.
+// Never empty: "Shouts First" has no requirements.
+function rollCombatStyle() {
+  setItems("combatStyle", sample(BUILD_DATA.combatStyle.filter(styleFits), 1));
 }
 
 // Name + gender, drawn from the current race's name pool.
@@ -104,34 +143,22 @@ function rollCharacter() {
   setItems("character", [{ name, description: gender + " " + race }]);
 }
 
+// Categories with custom roll logic, handled in dependency order below.
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "combatStyle"];
+
 function generateAll() {
-  // Race first (character depends on it), weapon before skills (skills must
-  // include the weapon's governing skill).
+  // Plain categories first (race before character), then the dependent chain:
+  // weapon -> skills (must include the weapon's skill) -> magic schools ->
+  // combat style (picked from what the build supports) -> character name.
   for (const cat of CATEGORIES) {
-    if (isLocked(cat.id) || cat.id === "character" || cat.id === "skills" || cat.id === "weapon") continue;
+    if (isLocked(cat.id) || SPECIAL_IDS.includes(cat.id)) continue;
     state[cat.id] = rollCategory(cat);
   }
   if (!isLocked("weapon")) rollWeapon();
   if (!isLocked("skills")) rollSkills(); // locked skills need no fix: weapon roll was constrained to them
+  if (!isLocked("magicSchools")) rollMagicSchools();
+  if (!isLocked("combatStyle")) rollCombatStyle();
   if (!isLocked("character")) rollCharacter();
-  render();
-}
-
-function rerollOne(catId) {
-  if (catId === "character") {
-    rollCharacter();
-  } else if (catId === "skills") {
-    rollSkills();
-  } else if (catId === "weapon") {
-    rollWeapon();
-    if (!isLocked("skills")) reconcileSkillsWithWeapon();
-  } else {
-    const cat = CATEGORIES.find((c) => c.id === catId);
-    const locked = state[catId].locked;
-    state[catId] = rollCategory(cat);
-    state[catId].locked = locked;
-    if (catId === "race" && !isLocked("character")) rollCharacter();
-  }
   render();
 }
 
@@ -157,13 +184,6 @@ function render() {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
-    const rerollBtn = document.createElement("button");
-    rerollBtn.className = "icon-btn";
-    rerollBtn.title = "Reroll " + cat.label;
-    rerollBtn.setAttribute("aria-label", "Reroll " + cat.label);
-    rerollBtn.textContent = "\u{1F3B2}";
-    rerollBtn.addEventListener("click", () => rerollOne(cat.id));
-
     const lockBtn = document.createElement("button");
     lockBtn.className = "icon-btn" + (entry.locked ? " active" : "");
     lockBtn.title = (entry.locked ? "Unlock " : "Lock ") + cat.label;
@@ -171,7 +191,7 @@ function render() {
     lockBtn.textContent = entry.locked ? "\u{1F512}" : "\u{1F513}";
     lockBtn.addEventListener("click", () => toggleLock(cat.id));
 
-    actions.append(rerollBtn, lockBtn);
+    actions.append(lockBtn);
     header.append(label, actions);
     card.appendChild(header);
 

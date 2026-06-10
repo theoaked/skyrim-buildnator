@@ -80,16 +80,20 @@ const BUILD_DATA = {
     { name: "The Tower", description: "Once a day, unlock any expert-or-lower lock." },
   ],
 
+  // `requires` ties a style to the rest of the build — every declared field
+  // must hold for the style to be rolled (or to constrain rolls when locked):
+  // weaponSkill: the weapon's governing skill; weaponName: an exact weapon;
+  // skill: a primary skill; magicSchool: a rolled school; anyMagic: >=1 school.
   combatStyle: [
-    { name: "Sword & Shield", description: "The classic. Block, bash, stab, repeat." },
-    { name: "Dual Wield", description: "Two weapons, zero defense, maximum carnage." },
-    { name: "Two-Handed", description: "Big weapon. Big swings. Big problems for everyone else." },
-    { name: "Archery", description: "Death from a distance — preferably while sneaking." },
-    { name: "Destruction Magic", description: "Fire, frost, and shock until nothing moves." },
-    { name: "Conjuration Summons", description: "Let your minions do the dirty work." },
-    { name: "Unarmed", description: "Fists only. Khajiit claws optional but recommended." },
-    { name: "Sneak Attacks", description: "30x dagger multipliers are a lifestyle." },
-    { name: "Spell & Blade", description: "Weapon in one hand, spell in the other." },
+    { name: "Sword & Shield", description: "The classic. Block, bash, stab, repeat.", requires: { weaponSkill: "One-Handed" } },
+    { name: "Dual Wield", description: "Two weapons, zero defense, maximum carnage.", requires: { weaponSkill: "One-Handed" } },
+    { name: "Two-Handed", description: "Big weapon. Big swings. Big problems for everyone else.", requires: { weaponSkill: "Two-Handed" } },
+    { name: "Archery", description: "Death from a distance — preferably while sneaking.", requires: { weaponSkill: "Archery" } },
+    { name: "Destruction Magic", description: "Fire, frost, and shock until nothing moves.", requires: { magicSchool: "Destruction" } },
+    { name: "Conjuration Summons", description: "Let your minions do the dirty work.", requires: { magicSchool: "Conjuration" } },
+    { name: "Unarmed", description: "Fists only. Khajiit claws optional but recommended.", requires: { weaponName: "Fists" } },
+    { name: "Sneak Attacks", description: "30x dagger multipliers are a lifestyle.", requires: { skill: "Sneak" } },
+    { name: "Spell & Blade", description: "Weapon in one hand, spell in the other.", requires: { weaponSkill: "One-Handed", anyMagic: true } },
     { name: "Shouts First", description: "FUS RO DAH is always the answer. Lead with the Voice." },
   ],
 
