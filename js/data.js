@@ -180,7 +180,9 @@ const BUILD_DATA = {
   // combinations from rolling together (in both directions when the rules
   // card is locked); noDaedra keeps the rule away from builds with a
   // daedric deity, affliction, or faction (entries flagged `daedric`);
-  // incompatibleDeities / incompatibleFactions ban specific pairings.
+  // incompatibleDeities / incompatibleFactions ban specific pairings;
+  // consoleCmds are emitted by the Skyrim setup file to enforce the rule
+  // mechanically in-game.
   roleplayRules: [
     { name: "Wanderlust", description: "Fast travel is for cowards — walk, ride, or take the carriage everywhere." },
     { name: "Creature of Habit", description: "Find a bed before midnight, every single night." },
@@ -197,7 +199,7 @@ const BUILD_DATA = {
     { name: "Homesick", description: "Visit your home (or the inn you call home) every in-game week." },
     { name: "Friend of the Forest", description: "Never kill wildlife. Run from wolves if you must." },
     { name: "Devout", description: "Visit and pray at every shrine you encounter." },
-    { name: "Born without magicka", description: "Your veins carry no magicka of your own — every spell must come from a staff or scroll.", requiresMagic: true },
+    { name: "Born without magicka", description: "Your veins carry no magicka of your own — every spell must come from a staff or scroll.", requiresMagic: true, consoleCmds: ["player.setav magicka 0"] },
     { name: "Sensitive Stomach", description: "Potions churn your guts — no drinking them; healing and buffs come from food alone." },
     { name: "Afraid of the Dark", description: "When night falls you freeze up — wait, sleep, or sit by a fire until dawn before doing anything." },
     { name: "Agnostic", description: "Magic is a trick you want no part of: no spells, no scrolls, no staffs, no enchanted gear.", requiresNoMagic: true, incompatibleWeapon: "Staff" },
@@ -206,6 +208,7 @@ const BUILD_DATA = {
     { name: "Lone Wolf", description: "No followers, no companions, no pets. You walk alone." },
     { name: "Vigilant of Stendarr", description: "Daedra are abominations — never use, carry, or craft Daedric weapons, armor, or artifacts, and destroy them where you find them.", noDaedra: true },
     { name: "Thalmor Sympathizer", description: "Talos is no god. Be ruthless to his worshippers — kill or report them, confiscate every Amulet of Talos, never pray at his shrines, side against the Stormcloaks, and sneer at Nord traditions.", incompatibleDeities: ["Talos"], incompatibleFactions: ["Stormcloaks"] },
+    { name: "Anemic", description: "Thin blood, weak heart — your stamina is a flicker (10). Sprint in heartbeats, not minutes, and ration every power attack.", consoleCmds: ["player.setav stamina 10"] },
   ],
 
   // Rules in the same group contradict each other and never roll together.

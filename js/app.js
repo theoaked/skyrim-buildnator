@@ -295,7 +295,8 @@ function buildHasDaedra() {
 // Roleplay rules roll after magic schools: rules flagged requiresMagic only
 // fit magic-oriented builds, rules incompatible with the rolled weapon or
 // with the build's daedric ties are skipped, and contradicting rules never
-// roll together.
+// roll together. The roll picks 4; through the popup the set can grow to 8
+// or shrink to 3.
 function rollRoleplayRules() {
   const hasMagic = currentMagicSchools().length > 0;
   const weaponName = state.weapon.items[0].name;
@@ -521,12 +522,13 @@ function removeMagicSchool(name) {
   setItems("magicSchools", kept.length ? kept : [NONE_ENTRY]);
 }
 
+// Removing a rule only refills when the set would drop below the floor.
 function removeRule(name) {
   const picked = state.roleplayRules.items.filter((r) => r.name !== name);
   const hasMagic = currentMagicSchools().length > 0;
   const weaponName = state.weapon.items[0].name;
   for (const candidate of sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length)) {
-    if (picked.length === MIN_PICKS.roleplayRules) break;
+    if (picked.length >= MIN_PICKS.roleplayRules) break;
     if (candidate.name === name) continue;
     if (picked.some((p) => p.name === candidate.name || rulesConflict(p.name, candidate.name))) continue;
     if (candidate.requiresMagic && (!hasMagic || picked.some((p) => p.requiresNoMagic))) continue;
@@ -540,16 +542,18 @@ function removeRule(name) {
   setItems("roleplayRules", picked);
 }
 
-// The chosen rule joins the set; current rules that don't contradict it are
-// kept, then the set is refilled to 4 with rules that fit the current build.
+// The chosen rule joins the set, growing it up to the cap of 8; at the cap
+// the oldest pick is pushed out. Current rules that don't contradict the
+// choice are kept.
 function chooseRule(option) {
   if (state.roleplayRules.items.some((r) => r.name === option.name)) return;
+  const target = Math.min(state.roleplayRules.items.length + 1, MAX_PICKS.roleplayRules);
   const hasMagic = currentMagicSchools().length > 0;
   const weaponName = state.weapon.items[0].name;
   const picked = [option];
   const candidates = state.roleplayRules.items.concat(sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length));
   for (const candidate of candidates) {
-    if (picked.length === 4) break;
+    if (picked.length === target) break;
     if (picked.some((p) => p.name === candidate.name || rulesConflict(p.name, candidate.name))) continue;
     if (candidate.requiresMagic && picked.some((p) => p.requiresNoMagic)) continue;
     if (candidate.requiresNoMagic && picked.some((p) => p.requiresMagic)) continue;
@@ -682,8 +686,8 @@ function optionsFor(catId) {
 // How many options a card can hold at once; picking more replaces the
 // oldest. MIN_PICKS is the mandatory floor: unchecking below it refills the
 // card automatically (and single-option cards can never be emptied).
-const MAX_PICKS = { skills: 3, magicSchools: 2, roleplayRules: 4 };
-const MIN_PICKS = { skills: 3, magicSchools: 0, roleplayRules: 4 };
+const MAX_PICKS = { skills: 3, magicSchools: 2, roleplayRules: 8 };
+const MIN_PICKS = { skills: 3, magicSchools: 0, roleplayRules: 3 };
 
 function modalHintFor(catId) {
   const max = MAX_PICKS[catId] || 1;

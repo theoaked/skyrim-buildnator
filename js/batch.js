@@ -192,6 +192,15 @@ function buildBatchFile() {
   sect("Gold for the road");
   L.push("player.additem f 100 ; 100 gold");
 
+  // Rules that carry a mechanical penalty (Born without magicka, Anemic...)
+  const enforced = state.roleplayRules.items.filter((r) => r.consoleCmds);
+  if (enforced.length) {
+    sect("Roleplay rules, enforced by the engine");
+    for (const r of enforced) {
+      for (const cmd of r.consoleCmds) L.push(cmd + " ; " + r.name);
+    }
+  }
+
   sect("Your oath (no console command can enforce honor)");
   if (isDragonborn) L.push("; Dragonborn: the Voice awakens with the main quest. FUS RO DAH.");
   L.push("; Combat style: " + style);
