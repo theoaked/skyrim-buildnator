@@ -87,13 +87,16 @@ const BUILD_DATA = {
   // must hold for the style to be rolled (or to constrain rolls when locked):
   // weaponSkill: the weapon's governing skill; weaponName: an exact weapon;
   // skill: a primary skill; magicSchool: a rolled school; anyMagic: >=1 school.
+  // Every style must match a primary skill (weapon styles do so through the
+  // weapon's governing skill, which is always a primary) unless it has no
+  // corresponding skill at all (Unarmed, Shouts First, Opportunist).
   combatStyle: [
     { name: "Sword & Shield", description: "The classic. Block, bash, stab, repeat.", requires: { weaponSkill: "One-Handed" } },
     { name: "Dual Wield", description: "Two weapons, zero defense, maximum carnage.", requires: { weaponSkill: "One-Handed" } },
     { name: "Two-Handed", description: "Big weapon. Big swings. Big problems for everyone else.", requires: { weaponSkill: "Two-Handed" } },
     { name: "Archery", description: "Death from a distance — preferably while sneaking.", requires: { weaponSkill: "Archery" } },
-    { name: "Destruction Magic", description: "Fire, frost, and shock until nothing moves.", requires: { magicSchool: "Destruction" } },
-    { name: "Conjuration Summons", description: "Let your minions do the dirty work.", requires: { magicSchool: "Conjuration" } },
+    { name: "Destruction Magic", description: "Fire, frost, and shock until nothing moves.", requires: { magicSchool: "Destruction", skill: "Destruction" } },
+    { name: "Conjuration Summons", description: "Let your minions do the dirty work.", requires: { magicSchool: "Conjuration", skill: "Conjuration" } },
     { name: "Unarmed", description: "Fists only. Khajiit claws optional but recommended.", requires: { weaponName: "Fists", excludeSkills: ["One-Handed", "Two-Handed", "Archery"] } },
     { name: "Sneak Attacks", description: "30x dagger multipliers are a lifestyle.", requires: { skill: "Sneak" } },
     { name: "Spell & Blade", description: "Weapon in one hand, spell in the other.", requires: { weaponSkill: "One-Handed", anyMagic: true } },
