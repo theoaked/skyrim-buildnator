@@ -105,6 +105,14 @@ function currentMagicSchools() {
   return state.magicSchools.items.map((i) => i.name).filter((n) => n !== "None");
 }
 
+// Magic-touched primary skills: a build carrying any of these can never have
+// "None" for magic schools (and magic-free builds never roll them).
+const MAGIC_SKILLS = ["Alteration", "Conjuration", "Destruction", "Illusion", "Restoration", "Enchanting"];
+
+function skillsNeedMagic() {
+  return currentSkillNames().some((n) => MAGIC_SKILLS.includes(n));
+}
+
 // Weapon roll, constrained by whatever is locked: a locked skills card only
 // allows compatible weapons (unrestricted ones like Fists/Staff always fit),
 // and a locked combat style enforces its weapon requirements.
@@ -135,6 +143,10 @@ function skillsConflict(a, b) {
 // required skill, and one of a locked archetype's skillIn are always
 // included; skills from the same conflict group never roll together.
 function rollSkills() {
+  // A magic-free build (locked Agnostic-style rules, or schools locked to
+  // None) never rolls magic-touched skills — they would force a school in.
+  const noMagicSkills = lockedRuleFlags().requiresNoMagic ||
+    (isLocked("magicSchools") && currentMagicSchools().length === 0);
   const requiredNames = [];
   const weaponSkill = state.weapon && state.weapon.items[0].skill;
   if (weaponSkill) requiredNames.push(weaponSkill);
@@ -143,7 +155,8 @@ function rollSkills() {
   const archSkillIn = lockedArchetypeRequires().skillIn;
   if (archSkillIn && !requiredNames.some((n) => archSkillIn.includes(n))) {
     const options = archSkillIn.filter(
-      (n) => !requiredNames.some((rn) => rn === n || skillsConflict(rn, n))
+      (n) => !requiredNames.some((rn) => rn === n || skillsConflict(rn, n)) &&
+        !(noMagicSkills && MAGIC_SKILLS.includes(n))
     );
     if (options.length) requiredNames.push(pick(options));
   }
@@ -152,6 +165,7 @@ function rollSkills() {
   for (const candidate of sample(BUILD_DATA.skills, BUILD_DATA.skills.length)) {
     if (picked.length === 3) break;
     if (excluded.includes(candidate.name)) continue;
+    if (noMagicSkills && MAGIC_SKILLS.includes(candidate.name)) continue;
     if (picked.some((p) => p.name === candidate.name || skillsConflict(p.name, candidate.name))) continue;
     picked.push(candidate);
   }
@@ -177,7 +191,8 @@ function rollMagicSchools() {
   }
   const mustHave = mustNames.map((n) => BUILD_DATA.magicSchools.find((s) => s.name === n));
   let n = Math.floor(Math.random() * 3);
-  const needAny = req.anyMagic || archReq.anyMagic || lockedArmorRequires().anyMagic || ruleFlags.requiresMagic;
+  const needAny = req.anyMagic || archReq.anyMagic || lockedArmorRequires().anyMagic ||
+    ruleFlags.requiresMagic || skillsNeedMagic();
   if ((needAny || mustHave.length) && n === 0) n = 1;
   if (n < mustHave.length) n = mustHave.length;
   const rest = sample(
@@ -421,6 +436,10 @@ function skillsFitNow() {
   if (req.excludeSkills && sk.some((s) => req.excludeSkills.includes(s))) return false;
   const archSkillIn = lockedArchetypeRequires().skillIn;
   if (archSkillIn && !sk.some((s) => archSkillIn.includes(s))) return false;
+  // Magic-touched skills don't fit a build pinned to no magic.
+  const noMagic = lockedRuleFlags().requiresNoMagic ||
+    (isLocked("magicSchools") && currentMagicSchools().length === 0);
+  if (noMagic && skillsNeedMagic()) return false;
   return true;
 }
 
@@ -434,7 +453,7 @@ function magicFitsNow() {
   const archReq = lockedArchetypeRequires();
   if (archReq.magicSchool && !schools.includes(archReq.magicSchool)) return false;
   if (archReq.magicSchoolIn && !schools.some((s) => archReq.magicSchoolIn.includes(s))) return false;
-  const needAny = req.anyMagic || archReq.anyMagic || lockedArmorRequires().anyMagic;
+  const needAny = req.anyMagic || archReq.anyMagic || lockedArmorRequires().anyMagic || skillsNeedMagic();
   if (needAny && schools.length === 0) return false;
   return true;
 }
