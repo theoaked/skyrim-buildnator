@@ -62,6 +62,17 @@ function lockedArmorRequires() {
   return state.armor.items[0].requires || {};
 }
 
+// Aggregated constraints imposed by a locked roleplay rules card.
+function lockedRuleFlags() {
+  if (!isLocked("roleplayRules")) return { incompatibleWeapons: [] };
+  const items = state.roleplayRules.items;
+  return {
+    requiresMagic: items.some((r) => r.requiresMagic),
+    requiresNoMagic: items.some((r) => r.requiresNoMagic),
+    incompatibleWeapons: items.map((r) => r.incompatibleWeapon).filter(Boolean),
+  };
+}
+
 function currentMagicSchools() {
   return state.magicSchools.items.map((i) => i.name).filter((n) => n !== "None");
 }
@@ -80,6 +91,8 @@ function rollWeapon() {
   if (req.weaponSkill) pool = pool.filter((w) => w.skill === req.weaponSkill);
   const armorReq = lockedArmorRequires();
   if (armorReq.weaponSkillNot) pool = pool.filter((w) => !armorReq.weaponSkillNot.includes(w.skill));
+  const ruleWeapons = lockedRuleFlags().incompatibleWeapons;
+  if (ruleWeapons.length) pool = pool.filter((w) => !ruleWeapons.includes(w.name));
   setItems("weapon", sample(pool, 1));
 }
 
@@ -109,14 +122,20 @@ function rollSkills() {
 
 // Magic schools roll (0-2 schools). A locked combat style can force a
 // specific school in, or at least one school for anyMagic styles; locked
-// Mage Robes also demand at least one school.
+// Mage Robes and magic-bound rules also demand one, while a locked
+// magic-averse rule (Agnostic) forces zero.
 function rollMagicSchools() {
+  const ruleFlags = lockedRuleFlags();
+  if (ruleFlags.requiresNoMagic) {
+    setItems("magicSchools", [NONE_ENTRY]);
+    return;
+  }
   const req = lockedStyleRequires();
   const mustHave = req.magicSchool
     ? [BUILD_DATA.magicSchools.find((s) => s.name === req.magicSchool)]
     : [];
   let n = Math.floor(Math.random() * 3);
-  if ((req.anyMagic || lockedArmorRequires().anyMagic || mustHave.length) && n === 0) n = 1;
+  if ((req.anyMagic || lockedArmorRequires().anyMagic || ruleFlags.requiresMagic || mustHave.length) && n === 0) n = 1;
   const rest = sample(
     BUILD_DATA.magicSchools.filter((s) => !mustHave.some((m) => m.name === s.name)),
     Math.max(0, n - mustHave.length)
@@ -182,11 +201,14 @@ function rulesConflict(a, b) {
 function rollRoleplayRules() {
   const hasMagic = currentMagicSchools().length > 0;
   const challenge = state.challenge.items[0].name;
+  const weaponName = state.weapon.items[0].name;
   const picked = [];
   for (const candidate of sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length)) {
     if (picked.length === 4) break;
     if (candidate.requiresMagic && !hasMagic) continue;
+    if (candidate.requiresNoMagic && hasMagic) continue;
     if (candidate.incompatibleChallenge === challenge) continue;
+    if (candidate.incompatibleWeapon === weaponName) continue;
     if (picked.some((p) => rulesConflict(p.name, candidate.name))) continue;
     picked.push(candidate);
   }

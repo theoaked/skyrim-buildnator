@@ -167,29 +167,38 @@ const BUILD_DATA = {
     { name: "Evil", description: "Skyrim is prey. Take what you want, burn the rest." },
   ],
 
+  // Each rule has a contextual title; the description carries the mechanic.
+  // Optional flags: requiresMagic / requiresNoMagic gate the rule on the
+  // build's magic schools; incompatibleChallenge / incompatibleWeapon keep
+  // contradicting combinations from rolling together (in both directions
+  // when the rules card is locked).
   roleplayRules: [
-    { name: "No fast travel", description: "Walk, ride, or take the carriage everywhere." },
-    { name: "Sleep every night", description: "Find a bed before midnight, every night." },
-    { name: "Eat three meals a day", description: "Breakfast, lunch, dinner — no skipping." },
-    { name: "Never steal", description: "Not even that sweetroll." },
-    { name: "Loot everything", description: "If it has value, it goes in the bag. Yes, all of it." },
-    { name: "No looting the dead", description: "Grave-robbing is beneath you." },
-    { name: "Vegetarian", description: "No meat. Cabbage soup forever." },
-    { name: "Always accept a bounty", description: "Never turn down honest mercenary work." },
-    { name: "No crafting", description: "Buy or find your gear — no smithing, alchemy, or enchanting." },
-    { name: "Crafted gear only", description: "Only use weapons and armor you made yourself." },
-    { name: "Always travel with a follower", description: "Never adventure alone.", incompatibleChallenge: "No followers" },
-    { name: "Never use carriages", description: "Your own two feet (or hooves) only." },
-    { name: "Return home weekly", description: "Visit your home (or an inn you call home) every in-game week." },
-    { name: "No killing animals", description: "Wildlife is sacred. Run from wolves if you must." },
-    { name: "Speak to every priest", description: "Visit and pray at every shrine you encounter." },
+    { name: "Wanderlust", description: "Fast travel is for cowards — walk, ride, or take the carriage everywhere." },
+    { name: "Creature of Habit", description: "Find a bed before midnight, every single night." },
+    { name: "Hearty Appetite", description: "Breakfast, lunch, dinner — three meals a day, no skipping." },
+    { name: "Honest Hands", description: "Never steal. Not even that sweetroll." },
+    { name: "Pack Rat", description: "If it has value, it goes in the bag. Yes, all of it." },
+    { name: "Respect the Dead", description: "Never loot a corpse. Grave-robbing is beneath you." },
+    { name: "Herbivore", description: "No meat. Cabbage soup forever." },
+    { name: "Mercenary's Code", description: "Never turn down a bounty or honest mercenary work." },
+    { name: "All Thumbs", description: "Buy or find your gear — no smithing, alchemy, or enchanting." },
+    { name: "Artisan's Pride", description: "Only use weapons and armor you crafted yourself." },
+    { name: "Never Alone", description: "Always travel with a follower. Never adventure solo.", incompatibleChallenge: "No followers" },
+    { name: "Sore Feet", description: "Never use carriages. Your own two feet (or hooves) only." },
+    { name: "Homesick", description: "Visit your home (or the inn you call home) every in-game week." },
+    { name: "Friend of the Forest", description: "Never kill wildlife. Run from wolves if you must." },
+    { name: "Devout", description: "Visit and pray at every shrine you encounter." },
     { name: "Born without magicka", description: "Your veins carry no magicka of your own — every spell must come from a staff or scroll.", requiresMagic: true },
+    { name: "Sensitive Stomach", description: "Potions churn your guts — no drinking them; healing and buffs come from food alone.", incompatibleChallenge: "No potions in combat" },
+    { name: "Afraid of the Dark", description: "When night falls you freeze up — wait, sleep, or sit by a fire until dawn before doing anything." },
+    { name: "Agnostic", description: "Magic is a trick you want no part of: no spells, no scrolls, no staffs, no enchanted gear.", requiresNoMagic: true, incompatibleWeapon: "Staff", incompatibleChallenge: "No healing magic" },
+    { name: "Heart of Iron", description: "If it's metal, it must be iron — weapons and armor of iron (or hide and leather) only." },
   ],
 
   // Rules in the same group contradict each other and never roll together.
   ruleConflicts: [
-    ["No crafting", "Crafted gear only"],
-    ["Loot everything", "No looting the dead"],
+    ["All Thumbs", "Artisan's Pride"],
+    ["Pack Rat", "Respect the Dead"],
   ],
 
   affliction: [
