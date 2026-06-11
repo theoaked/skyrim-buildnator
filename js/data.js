@@ -179,7 +179,8 @@ const BUILD_DATA = {
   // build's magic schools; incompatibleWeapon keeps contradicting
   // combinations from rolling together (in both directions when the rules
   // card is locked); noDaedra keeps the rule away from builds with a
-  // daedric deity, affliction, or faction (entries flagged `daedric`).
+  // daedric deity, affliction, or faction (entries flagged `daedric`);
+  // incompatibleDeities / incompatibleFactions ban specific pairings.
   roleplayRules: [
     { name: "Wanderlust", description: "Fast travel is for cowards — walk, ride, or take the carriage everywhere." },
     { name: "Creature of Habit", description: "Find a bed before midnight, every single night." },
@@ -204,6 +205,7 @@ const BUILD_DATA = {
     { name: "Sentimental Value", description: "Never sell anything — your coin comes from quest rewards and what you find." },
     { name: "Lone Wolf", description: "No followers, no companions, no pets. You walk alone." },
     { name: "Vigilant of Stendarr", description: "Daedra are abominations — never use, carry, or craft Daedric weapons, armor, or artifacts, and destroy them where you find them.", noDaedra: true },
+    { name: "Thalmor Sympathizer", description: "Talos is no god. Be ruthless to his worshippers — kill or report them, confiscate every Amulet of Talos, never pray at his shrines, side against the Stormcloaks, and sneer at Nord traditions.", incompatibleDeities: ["Talos"], incompatibleFactions: ["Stormcloaks"] },
   ],
 
   // Rules in the same group contradict each other and never roll together.
@@ -211,6 +213,7 @@ const BUILD_DATA = {
     ["All Thumbs", "Artisan's Pride"],
     ["Pack Rat", "Respect the Dead"],
     ["Never Alone", "Lone Wolf"],
+    ["Devout", "Thalmor Sympathizer"],
   ],
 
   // `incompatibleFactions` keeps lore-breaking pairs from rolling together

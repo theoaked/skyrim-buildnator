@@ -72,14 +72,33 @@ function lockedArmorRequires() {
 
 // Aggregated constraints imposed by a locked roleplay rules card.
 function lockedRuleFlags() {
-  if (!isLocked("roleplayRules")) return { incompatibleWeapons: [] };
+  if (!isLocked("roleplayRules")) {
+    return { incompatibleWeapons: [], incompatibleDeities: [], incompatibleFactions: [] };
+  }
   const items = state.roleplayRules.items;
   return {
     requiresMagic: items.some((r) => r.requiresMagic),
     requiresNoMagic: items.some((r) => r.requiresNoMagic),
     noDaedra: items.some((r) => r.noDaedra),
     incompatibleWeapons: items.map((r) => r.incompatibleWeapon).filter(Boolean),
+    incompatibleDeities: items.flatMap((r) => r.incompatibleDeities || []),
+    incompatibleFactions: items.flatMap((r) => r.incompatibleFactions || []),
   };
+}
+
+// Whether a deity/faction entry is allowed under a locked rules card.
+function deityAllowedByLockedRules(d) {
+  const flags = lockedRuleFlags();
+  if (flags.noDaedra && d.daedric) return false;
+  if (flags.incompatibleDeities.includes(d.name)) return false;
+  return true;
+}
+
+function factionAllowedByLockedRules(f) {
+  const flags = lockedRuleFlags();
+  if (flags.noDaedra && f.daedric) return false;
+  if (flags.incompatibleFactions.includes(f.name)) return false;
+  return true;
 }
 
 function currentMagicSchools() {
@@ -231,7 +250,7 @@ function rollFaction() {
     const incompatible = state.affliction.items[0].incompatibleFactions || [];
     pool = pool.filter((f) => !incompatible.includes(f.name));
   }
-  if (lockedRuleFlags().noDaedra) pool = pool.filter((f) => !f.daedric);
+  pool = pool.filter(factionAllowedByLockedRules);
   setItems("faction", sample(pool, 1));
 }
 
@@ -272,6 +291,8 @@ function rollRoleplayRules() {
     if (candidate.requiresNoMagic && hasMagic) continue;
     if (candidate.incompatibleWeapon === weaponName) continue;
     if (candidate.noDaedra && buildHasDaedra()) continue;
+    if ((candidate.incompatibleDeities || []).includes(state.deity.items[0].name)) continue;
+    if ((candidate.incompatibleFactions || []).includes(state.faction.items[0].name)) continue;
     if (picked.some((p) => rulesConflict(p.name, candidate.name))) continue;
     picked.push(candidate);
   }
@@ -346,9 +367,10 @@ function generateAll() {
     if (isLocked(cat.id) || SPECIAL_IDS.includes(cat.id)) continue;
     state[cat.id] = rollCategory(cat);
   }
-  // Locked Vigilant-style rules forbid daedric deities the generic loop rolled.
-  if (!isLocked("deity") && lockedRuleFlags().noDaedra && state.deity.items[0].daedric) {
-    setItems("deity", sample(BUILD_DATA.deity.filter((d) => !d.daedric), 1));
+  // Locked rules (Vigilant, Thalmor Sympathizer) forbid certain deities the
+  // generic loop may have rolled.
+  if (!isLocked("deity") && !deityAllowedByLockedRules(state.deity.items[0])) {
+    setItems("deity", sample(BUILD_DATA.deity.filter(deityAllowedByLockedRules), 1));
   }
   if (!isLocked("faction")) rollFaction();
   if (!isLocked("affliction")) rollAffliction();
@@ -432,6 +454,8 @@ function rulesFitNow() {
     if (rule.requiresNoMagic && hasMagic) return false;
     if (rule.incompatibleWeapon === weaponName) return false;
     if (rule.noDaedra && buildHasDaedra()) return false;
+    if ((rule.incompatibleDeities || []).includes(state.deity.items[0].name)) return false;
+    if ((rule.incompatibleFactions || []).includes(state.faction.items[0].name)) return false;
   }
   return true;
 }
@@ -490,6 +514,8 @@ function removeRule(name) {
     if (candidate.requiresNoMagic && (hasMagic || picked.some((p) => p.requiresMagic))) continue;
     if (candidate.incompatibleWeapon === weaponName) continue;
     if (candidate.noDaedra && buildHasDaedra()) continue;
+    if ((candidate.incompatibleDeities || []).includes(state.deity.items[0].name)) continue;
+    if ((candidate.incompatibleFactions || []).includes(state.faction.items[0].name)) continue;
     picked.push(candidate);
   }
   setItems("roleplayRules", picked);
@@ -513,6 +539,8 @@ function chooseRule(option) {
       if (candidate.requiresNoMagic && hasMagic) continue;
       if (candidate.incompatibleWeapon === weaponName) continue;
       if (candidate.noDaedra && buildHasDaedra()) continue;
+      if ((candidate.incompatibleDeities || []).includes(state.deity.items[0].name)) continue;
+      if ((candidate.incompatibleFactions || []).includes(state.faction.items[0].name)) continue;
     }
     picked.push(candidate);
   }
@@ -533,10 +561,10 @@ function reconcile(chosenId) {
   if (chosenId === "race" && !state.character.items[0].description.endsWith(" " + state.race.items[0].name)) {
     rollCharacter();
   }
-  if (chosenId !== "deity" && lockedRuleFlags().noDaedra && state.deity.items[0].daedric) {
-    setItems("deity", sample(BUILD_DATA.deity.filter((d) => !d.daedric), 1));
+  if (chosenId !== "deity" && !deityAllowedByLockedRules(state.deity.items[0])) {
+    setItems("deity", sample(BUILD_DATA.deity.filter(deityAllowedByLockedRules), 1));
   }
-  if (chosenId !== "faction" && lockedRuleFlags().noDaedra && state.faction.items[0].daedric) rollFaction();
+  if (chosenId !== "faction" && !factionAllowedByLockedRules(state.faction.items[0])) rollFaction();
   if (chosenId !== "affliction" && lockedRuleFlags().noDaedra && state.affliction.items[0].daedric) rollAffliction();
   const pairBroken = (state.affliction.items[0].incompatibleFactions || []).includes(state.faction.items[0].name);
   if (pairBroken) {
