@@ -520,6 +520,7 @@ function reconcile(chosenId) {
 }
 
 function applyChoice(cat, option) {
+  const before = state[cat.id].items.map((i) => i.name);
   if (cat.id === "skills") chooseSkill(option);
   else if (cat.id === "magicSchools") chooseMagicSchool(option);
   else if (cat.id === "roleplayRules") chooseRule(option);
@@ -532,8 +533,17 @@ function applyChoice(cat, option) {
   }
   reconcile(cat.id);
   narrativeText = buildNarrative();
-  closeOptionsModal();
   render();
+  // The modal stays open so more options can be picked; warn when the pick
+  // went past the card's capacity and pushed something out.
+  const after = state[cat.id].items.map((i) => i.name);
+  const dropped = before.filter((n) => !after.includes(n));
+  const max = MAX_PICKS[cat.id] || 1;
+  let notice = "";
+  if (max > 1 && option.name !== "None" && dropped.length && !before.includes(option.name)) {
+    notice = "Only " + max + " fit on this card — replaced " + dropped.join(", ") + ".";
+  }
+  openOptionsModal(cat, notice);
 }
 
 // The Dragonborn checkbox. Turning it off while a locked "Shouts First"
@@ -561,8 +571,18 @@ function optionsFor(catId) {
   return BUILD_DATA[catId];
 }
 
-function openOptionsModal(cat) {
-  document.getElementById("modal-title").textContent = cat.label + " — pick an option";
+// How many options a card can hold at once; picking more replaces the oldest.
+const MAX_PICKS = { skills: 3, magicSchools: 2, roleplayRules: 4 };
+
+function openOptionsModal(cat, notice) {
+  const max = MAX_PICKS[cat.id] || 1;
+  document.getElementById("modal-title").textContent =
+    cat.label + (max > 1 ? " — choose up to " + max : " — choose one");
+  const hint = document.getElementById("modal-hint");
+  hint.textContent = notice || (max > 1
+    ? "Click options to add them — this card holds at most " + max + "; picking more replaces the oldest."
+    : "Click an option to use it.");
+  hint.className = "modal-hint" + (notice ? " modal-hint-warning" : "");
   const body = document.getElementById("modal-body");
   body.innerHTML = "";
   const currentNames = state[cat.id].items.map((i) => i.name);
