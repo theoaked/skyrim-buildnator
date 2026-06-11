@@ -1,11 +1,11 @@
 :root {
-  --bg: #0d0d0f;
-  --bg-card: #16161a;
-  --gold: #c9a86a;
-  --gold-bright: #e8cf9a;
-  --text: #d8d3c8;
-  --text-dim: #8f8a7e;
-  --border: #3a3528;
+  --bg: #000000;
+  --bg-card: #0c0c0f;
+  --steel: #9b9ba3;
+  --steel-bright: #e8e8ee;
+  --text: #cfcfd5;
+  --text-dim: #7d7d86;
+  --border: #2a2a30;
 }
 
 * {
@@ -17,8 +17,8 @@
 body {
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse at top, rgba(201, 168, 106, 0.06), transparent 60%),
-    radial-gradient(ellipse at bottom, rgba(201, 168, 106, 0.03), transparent 60%);
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(160, 160, 175, 0.07), transparent 70%),
+    radial-gradient(ellipse 70% 40% at 50% 100%, rgba(160, 160, 175, 0.04), transparent 70%);
   color: var(--text);
   font-family: "EB Garamond", Georgia, serif;
   font-size: 18px;
@@ -33,23 +33,87 @@ h1, h2 {
   text-transform: uppercase;
 }
 
+/* ---------- Header: black game-cover look ---------- */
+
 .site-header {
+  position: relative;
   text-align: center;
-  padding: 3rem 1rem 2rem;
+  padding: 3.5rem 1rem 1rem;
+  overflow: hidden;
 }
 
-.site-header h1 {
-  font-size: clamp(2rem, 6vw, 3.5rem);
-  color: var(--gold-bright);
-  text-shadow: 0 0 30px rgba(201, 168, 106, 0.3);
+/* Faint embossed seal behind the logo, like the cover's dragon emblem */
+.seal {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  border: 1px solid rgba(220, 220, 230, 0.05);
+  box-shadow:
+    inset 0 0 60px rgba(220, 220, 230, 0.04),
+    0 0 80px rgba(220, 220, 230, 0.03);
+  pointer-events: none;
+}
+
+.seal::after {
+  content: "";
+  position: absolute;
+  inset: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(220, 220, 230, 0.04);
+}
+
+.logo {
+  width: min(440px, 82vw);
+  height: auto;
+  /* the source logo is black-on-transparent: invert to silver-white */
+  filter: invert(0.92) drop-shadow(0 0 22px rgba(235, 235, 245, 0.22));
+}
+
+.app-name {
+  font-family: "Cinzel", serif;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  letter-spacing: 0.55em;
+  text-indent: 0.55em;
+  text-transform: uppercase;
+  color: var(--steel);
+  margin-top: 0.4rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 14px rgba(235, 235, 245, 0.12);
 }
 
 .subtitle {
   color: var(--text-dim);
   font-style: italic;
-  margin: 0.5rem 0 1.8rem;
+  margin: 0.8rem 0 1.8rem;
   font-size: 1.1rem;
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  max-width: 720px;
+  margin: 2.2rem auto 0;
+  color: rgba(220, 220, 230, 0.35);
+  font-size: 0.8rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200, 200, 215, 0.4));
+}
+
+.divider::after {
+  background: linear-gradient(90deg, rgba(200, 200, 215, 0.4), transparent);
+}
+
+/* ---------- Buttons: brushed-steel ---------- */
 
 .controls {
   display: flex;
@@ -64,20 +128,22 @@ h1, h2 {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  border: 1px solid var(--gold);
+  border: 1px solid var(--steel);
   padding: 0.85rem 2rem;
   transition: all 0.2s ease;
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, rgba(201, 168, 106, 0.18), rgba(201, 168, 106, 0.06));
-  color: var(--gold-bright);
+  background: linear-gradient(180deg, rgba(235, 235, 245, 0.16), rgba(235, 235, 245, 0.04) 55%, rgba(235, 235, 245, 0.1));
+  color: var(--steel-bright);
   font-size: 1.15rem;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, rgba(201, 168, 106, 0.32), rgba(201, 168, 106, 0.12));
-  box-shadow: 0 0 20px rgba(201, 168, 106, 0.35);
+  background: linear-gradient(180deg, rgba(235, 235, 245, 0.28), rgba(235, 235, 245, 0.1) 55%, rgba(235, 235, 245, 0.18));
+  box-shadow: 0 0 24px rgba(235, 235, 245, 0.25);
+  border-color: var(--steel-bright);
 }
 
 .btn-secondary {
@@ -88,21 +154,25 @@ h1, h2 {
 }
 
 .btn-secondary:hover {
-  border-color: var(--gold);
-  color: var(--gold-bright);
+  border-color: var(--steel);
+  color: var(--steel-bright);
 }
+
+/* ---------- Layout ---------- */
 
 main {
   flex: 1;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem 3rem;
+  padding: 1.6rem 1rem 3rem;
 }
 
+/* ---------- Narrative ---------- */
+
 .narrative {
-  background: var(--bg-card);
-  border: 1px solid var(--gold);
+  background: linear-gradient(180deg, #101013, #0a0a0d);
+  border: 1px solid var(--steel);
   padding: 1.4rem 1.8rem;
   margin-bottom: 1.4rem;
   clip-path: polygon(
@@ -114,7 +184,7 @@ main {
 
 .narrative h2 {
   font-size: 0.8rem;
-  color: var(--gold);
+  color: var(--steel);
   font-weight: 600;
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.5rem;
@@ -127,6 +197,8 @@ main {
   font-size: 1.08rem;
 }
 
+/* ---------- Cards ---------- */
+
 .build-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -134,12 +206,11 @@ main {
 }
 
 .card {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, #0e0e11, #0a0a0c);
   border: 1px solid var(--border);
   padding: 1.2rem 1.4rem;
   position: relative;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  /* Skyrim-style beveled corners */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   clip-path: polygon(
     12px 0, calc(100% - 12px) 0, 100% 12px,
     100% calc(100% - 12px), calc(100% - 12px) 100%,
@@ -147,9 +218,16 @@ main {
   );
 }
 
+.card:hover {
+  border-color: #3d3d45;
+  transform: translateY(-2px);
+}
+
 .card.locked {
-  border-color: var(--gold);
-  box-shadow: inset 0 0 25px rgba(201, 168, 106, 0.1);
+  border-color: var(--steel);
+  box-shadow:
+    inset 0 0 28px rgba(235, 235, 245, 0.06),
+    0 0 18px rgba(235, 235, 245, 0.08);
 }
 
 .card-header {
@@ -169,7 +247,7 @@ main {
 }
 
 .card.locked .card-header h2 {
-  color: var(--gold);
+  color: var(--steel-bright);
 }
 
 .card-actions {
@@ -185,6 +263,7 @@ main {
   opacity: 0.45;
   transition: opacity 0.15s ease, transform 0.15s ease;
   line-height: 1;
+  filter: grayscale(1) brightness(1.4);
 }
 
 .icon-btn:hover {
@@ -199,7 +278,8 @@ main {
 .card-value {
   font-family: "Cinzel", serif;
   font-size: 1.25rem;
-  color: var(--gold-bright);
+  color: var(--steel-bright);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
   margin-top: 0.4rem;
 }
 
@@ -214,10 +294,12 @@ main {
   margin-top: 0.15rem;
 }
 
+/* ---------- Options modal ---------- */
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,12 +312,13 @@ main {
 }
 
 .modal {
-  background: var(--bg-card);
-  border: 1px solid var(--gold);
+  background: linear-gradient(180deg, #101013, #0a0a0d);
+  border: 1px solid var(--steel);
   width: min(640px, 100%);
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 0 60px rgba(235, 235, 245, 0.12);
   clip-path: polygon(
     12px 0, calc(100% - 12px) 0, 100% 12px,
     100% calc(100% - 12px), calc(100% - 12px) 100%,
@@ -253,13 +336,14 @@ main {
 
 .modal-header h2 {
   font-size: 0.9rem;
-  color: var(--gold);
+  color: var(--steel);
   font-weight: 600;
 }
 
 .modal-header .icon-btn {
   color: var(--text);
   font-size: 1.1rem;
+  filter: none;
 }
 
 .modal-body {
@@ -280,6 +364,8 @@ main {
   font-size: 1.05rem;
 }
 
+/* ---------- Footer ---------- */
+
 .site-footer {
   text-align: center;
   padding: 1.5rem 1rem 2rem;
@@ -289,5 +375,11 @@ main {
 }
 
 .site-footer a {
-  color: var(--gold);
+  color: var(--steel);
+}
+
+.fine-print {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  color: #55555e;
 }
