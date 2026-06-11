@@ -158,12 +158,39 @@ function rollArmor() {
   setItems("armor", sample(BUILD_DATA.armor.filter(armorFits), 1));
 }
 
-// Roleplay rules roll after magic schools: rules flagged requiresMagic only
-// fit magic-oriented builds (at least one school rolled).
+// Challenge rolls before roleplay rules; when the rules are locked, skip
+// challenges that contradict a locked rule (e.g. No followers vs the
+// always-travel-with-a-follower rule).
+function rollChallenge() {
+  let pool = BUILD_DATA.challenge;
+  if (isLocked("roleplayRules")) {
+    const incompatible = state.roleplayRules.items
+      .map((r) => r.incompatibleChallenge)
+      .filter(Boolean);
+    pool = pool.filter((c) => !incompatible.includes(c.name));
+  }
+  setItems("challenge", sample(pool, 1));
+}
+
+function rulesConflict(a, b) {
+  return BUILD_DATA.ruleConflicts.some((group) => group.includes(a) && group.includes(b));
+}
+
+// Roleplay rules roll after magic schools and the challenge: rules flagged
+// requiresMagic only fit magic-oriented builds, rules incompatible with the
+// rolled challenge are skipped, and contradicting rules never roll together.
 function rollRoleplayRules() {
   const hasMagic = currentMagicSchools().length > 0;
-  const pool = BUILD_DATA.roleplayRules.filter((r) => !r.requiresMagic || hasMagic);
-  setItems("roleplayRules", sample(pool, 2));
+  const challenge = state.challenge.items[0].name;
+  const picked = [];
+  for (const candidate of sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length)) {
+    if (picked.length === 4) break;
+    if (candidate.requiresMagic && !hasMagic) continue;
+    if (candidate.incompatibleChallenge === challenge) continue;
+    if (picked.some((p) => rulesConflict(p.name, candidate.name))) continue;
+    picked.push(candidate);
+  }
+  setItems("roleplayRules", picked);
 }
 
 // Name + gender, drawn from the current race's name pool.
@@ -176,7 +203,7 @@ function rollCharacter() {
 }
 
 // Categories with custom roll logic, handled in dependency order below.
-const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules"];
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules", "challenge"];
 
 let narrativeText = "";
 
@@ -237,6 +264,7 @@ function generateAll() {
   if (!isLocked("skills")) rollSkills(); // locked skills need no fix: weapon roll was constrained to them
   if (!isLocked("magicSchools")) rollMagicSchools();
   if (!isLocked("armor")) rollArmor();
+  if (!isLocked("challenge")) rollChallenge();
   if (!isLocked("roleplayRules")) rollRoleplayRules();
   if (!isLocked("combatStyle")) rollCombatStyle();
   if (!isLocked("character")) rollCharacter();

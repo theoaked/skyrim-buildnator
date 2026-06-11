@@ -178,12 +178,18 @@ const BUILD_DATA = {
     { name: "Always accept a bounty", description: "Never turn down honest mercenary work." },
     { name: "No crafting", description: "Buy or find your gear — no smithing, alchemy, or enchanting." },
     { name: "Crafted gear only", description: "Only use weapons and armor you made yourself." },
-    { name: "Always travel with a follower", description: "Never adventure alone." },
+    { name: "Always travel with a follower", description: "Never adventure alone.", incompatibleChallenge: "No followers" },
     { name: "Never use carriages", description: "Your own two feet (or hooves) only." },
     { name: "Return home weekly", description: "Visit your home (or an inn you call home) every in-game week." },
     { name: "No killing animals", description: "Wildlife is sacred. Run from wolves if you must." },
     { name: "Speak to every priest", description: "Visit and pray at every shrine you encounter." },
     { name: "Born without magicka", description: "Your veins carry no magicka of your own — every spell must come from a staff or scroll.", requiresMagic: true },
+  ],
+
+  // Rules in the same group contradict each other and never roll together.
+  ruleConflicts: [
+    ["No crafting", "Crafted gear only"],
+    ["Loot everything", "No looting the dead"],
   ],
 
   affliction: [
