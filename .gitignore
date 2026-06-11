@@ -1,0 +1,5 @@
+# mod build outputs
+mod/out/
+mod/Generator/bin/
+mod/Generator/obj/
+dist/
