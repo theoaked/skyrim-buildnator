@@ -16,8 +16,7 @@ const CATEGORIES = [
   { id: "faction", label: "Faction", pool: BUILD_DATA.faction, count: 1 },
   { id: "deity", label: "Deity", pool: BUILD_DATA.deity, count: 1 },
   { id: "morality", label: "Morality", pool: BUILD_DATA.morality, count: 1 },
-  { id: "roleplayRules", label: "Roleplay Rules", pool: BUILD_DATA.roleplayRules, count: 2 },
-  { id: "challenge", label: "Challenge", pool: BUILD_DATA.challenge, count: 1 },
+  { id: "roleplayRules", label: "Roleplay Rules" },
 ];
 
 const NONE_ENTRY = { name: "None", description: "Magic is for the weak." };
@@ -177,37 +176,21 @@ function rollArmor() {
   setItems("armor", sample(BUILD_DATA.armor.filter(armorFits), 1));
 }
 
-// Challenge rolls before roleplay rules; when the rules are locked, skip
-// challenges that contradict a locked rule (e.g. No followers vs the
-// always-travel-with-a-follower rule).
-function rollChallenge() {
-  let pool = BUILD_DATA.challenge;
-  if (isLocked("roleplayRules")) {
-    const incompatible = state.roleplayRules.items
-      .map((r) => r.incompatibleChallenge)
-      .filter(Boolean);
-    pool = pool.filter((c) => !incompatible.includes(c.name));
-  }
-  setItems("challenge", sample(pool, 1));
-}
-
 function rulesConflict(a, b) {
   return BUILD_DATA.ruleConflicts.some((group) => group.includes(a) && group.includes(b));
 }
 
-// Roleplay rules roll after magic schools and the challenge: rules flagged
-// requiresMagic only fit magic-oriented builds, rules incompatible with the
-// rolled challenge are skipped, and contradicting rules never roll together.
+// Roleplay rules roll after magic schools: rules flagged requiresMagic only
+// fit magic-oriented builds, rules incompatible with the rolled weapon are
+// skipped, and contradicting rules never roll together.
 function rollRoleplayRules() {
   const hasMagic = currentMagicSchools().length > 0;
-  const challenge = state.challenge.items[0].name;
   const weaponName = state.weapon.items[0].name;
   const picked = [];
   for (const candidate of sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length)) {
     if (picked.length === 4) break;
     if (candidate.requiresMagic && !hasMagic) continue;
     if (candidate.requiresNoMagic && hasMagic) continue;
-    if (candidate.incompatibleChallenge === challenge) continue;
     if (candidate.incompatibleWeapon === weaponName) continue;
     if (picked.some((p) => rulesConflict(p.name, candidate.name))) continue;
     picked.push(candidate);
@@ -225,7 +208,7 @@ function rollCharacter() {
 }
 
 // Categories with custom roll logic, handled in dependency order below.
-const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules", "challenge"];
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules"];
 
 let narrativeText = "";
 
@@ -286,7 +269,6 @@ function generateAll() {
   if (!isLocked("skills")) rollSkills(); // locked skills need no fix: weapon roll was constrained to them
   if (!isLocked("magicSchools")) rollMagicSchools();
   if (!isLocked("armor")) rollArmor();
-  if (!isLocked("challenge")) rollChallenge();
   if (!isLocked("roleplayRules")) rollRoleplayRules();
   if (!isLocked("combatStyle")) rollCombatStyle();
   if (!isLocked("character")) rollCharacter();
@@ -299,17 +281,9 @@ function toggleLock(catId) {
   render();
 }
 
-// All options shown by the per-card 📜 button. For the character card the
-// options are the name pools, grouped by race.
+// All options shown by the per-card 📜 button (the character card has none —
+// its name pools are too long to be useful in a list).
 function optionsFor(catId) {
-  if (catId === "character") {
-    return Object.keys(BUILD_DATA.names).map((race) => ({
-      name: race,
-      description:
-        "Male: " + BUILD_DATA.names[race].male.join(", ") +
-        " — Female: " + BUILD_DATA.names[race].female.join(", "),
-    }));
-  }
   if (catId === "magicSchools") return [NONE_ENTRY].concat(BUILD_DATA.magicSchools);
   return BUILD_DATA[catId];
 }
@@ -358,12 +332,15 @@ function render() {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
-    const optionsBtn = document.createElement("button");
-    optionsBtn.className = "icon-btn";
-    optionsBtn.title = "View all " + cat.label + " options";
-    optionsBtn.setAttribute("aria-label", "View all " + cat.label + " options");
-    optionsBtn.textContent = "\u{1F4DC}";
-    optionsBtn.addEventListener("click", () => openOptionsModal(cat));
+    if (cat.id !== "character") {
+      const optionsBtn = document.createElement("button");
+      optionsBtn.className = "icon-btn";
+      optionsBtn.title = "View all " + cat.label + " options";
+      optionsBtn.setAttribute("aria-label", "View all " + cat.label + " options");
+      optionsBtn.textContent = "\u{1F4DC}";
+      optionsBtn.addEventListener("click", () => openOptionsModal(cat));
+      actions.append(optionsBtn);
+    }
 
     const lockBtn = document.createElement("button");
     lockBtn.className = "icon-btn" + (entry.locked ? " active" : "");
@@ -372,7 +349,7 @@ function render() {
     lockBtn.textContent = entry.locked ? "\u{1F512}" : "\u{1F513}";
     lockBtn.addEventListener("click", () => toggleLock(cat.id));
 
-    actions.append(optionsBtn, lockBtn);
+    actions.append(lockBtn);
     header.append(label, actions);
     card.appendChild(header);
 

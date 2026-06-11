@@ -169,9 +169,9 @@ const BUILD_DATA = {
 
   // Each rule has a contextual title; the description carries the mechanic.
   // Optional flags: requiresMagic / requiresNoMagic gate the rule on the
-  // build's magic schools; incompatibleChallenge / incompatibleWeapon keep
-  // contradicting combinations from rolling together (in both directions
-  // when the rules card is locked).
+  // build's magic schools; incompatibleWeapon keeps contradicting
+  // combinations from rolling together (in both directions when the rules
+  // card is locked).
   roleplayRules: [
     { name: "Wanderlust", description: "Fast travel is for cowards — walk, ride, or take the carriage everywhere." },
     { name: "Creature of Habit", description: "Find a bed before midnight, every single night." },
@@ -183,22 +183,25 @@ const BUILD_DATA = {
     { name: "Mercenary's Code", description: "Never turn down a bounty or honest mercenary work." },
     { name: "All Thumbs", description: "Buy or find your gear — no smithing, alchemy, or enchanting." },
     { name: "Artisan's Pride", description: "Only use weapons and armor you crafted yourself." },
-    { name: "Never Alone", description: "Always travel with a follower. Never adventure solo.", incompatibleChallenge: "No followers" },
+    { name: "Never Alone", description: "Always travel with a follower. Never adventure solo." },
     { name: "Sore Feet", description: "Never use carriages. Your own two feet (or hooves) only." },
     { name: "Homesick", description: "Visit your home (or the inn you call home) every in-game week." },
     { name: "Friend of the Forest", description: "Never kill wildlife. Run from wolves if you must." },
     { name: "Devout", description: "Visit and pray at every shrine you encounter." },
     { name: "Born without magicka", description: "Your veins carry no magicka of your own — every spell must come from a staff or scroll.", requiresMagic: true },
-    { name: "Sensitive Stomach", description: "Potions churn your guts — no drinking them; healing and buffs come from food alone.", incompatibleChallenge: "No potions in combat" },
+    { name: "Sensitive Stomach", description: "Potions churn your guts — no drinking them; healing and buffs come from food alone." },
     { name: "Afraid of the Dark", description: "When night falls you freeze up — wait, sleep, or sit by a fire until dawn before doing anything." },
-    { name: "Agnostic", description: "Magic is a trick you want no part of: no spells, no scrolls, no staffs, no enchanted gear.", requiresNoMagic: true, incompatibleWeapon: "Staff", incompatibleChallenge: "No healing magic" },
+    { name: "Agnostic", description: "Magic is a trick you want no part of: no spells, no scrolls, no staffs, no enchanted gear.", requiresNoMagic: true, incompatibleWeapon: "Staff" },
     { name: "Heart of Iron", description: "If it's metal, it must be iron — weapons and armor of iron (or hide and leather) only." },
+    { name: "Sentimental Value", description: "Never sell anything — your coin comes from quest rewards and what you find." },
+    { name: "Lone Wolf", description: "No followers, no companions, no pets. You walk alone." },
   ],
 
   // Rules in the same group contradict each other and never roll together.
   ruleConflicts: [
     ["All Thumbs", "Artisan's Pride"],
     ["Pack Rat", "Respect the Dead"],
+    ["Never Alone", "Lone Wolf"],
   ],
 
   affliction: [
@@ -206,19 +209,6 @@ const BUILD_DATA = {
     { name: "Werewolf", description: "The blood of Hircine runs in your veins. Beast Form when the hunt calls." },
     { name: "Vampire", description: "A creature of the night. Feed regularly — or stop pretending to be one of them." },
     { name: "Vampire Lord", description: "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard)." },
-  ],
-
-  challenge: [
-    { name: "Permadeath", description: "If you die, delete the save. Start over." },
-    { name: "No HUD", description: "Disable the HUD. Navigate by landmarks and instinct." },
-    { name: "No followers", description: "You walk alone. No companions, no pets." },
-    { name: "No potions in combat", description: "Drink before the fight or not at all." },
-    { name: "Legendary difficulty", description: "Maximum difficulty from level 1. Pain." },
-    { name: "No healing magic", description: "Potions, food, and patience only." },
-    { name: "Sell nothing", description: "Income from quest rewards and found coin only." },
-    { name: "One life per hold", description: "Die in a hold, never return to it." },
-    { name: "No sprinting", description: "Dignified walking pace at all times." },
-    { name: "No challenge", description: "The Divines smile upon you. Just enjoy the ride." },
   ],
 
   // Sentence templates for the character backstory. Placeholders are filled
@@ -277,44 +267,44 @@ const BUILD_DATA = {
   // Lore-friendly name pools per race, used to roll the character's name + gender.
   names: {
     Nord: {
-      male: ["Bjorn", "Ulfgar", "Ragnar", "Sigurd", "Torvald", "Halvard", "Eirik", "Stennar"],
-      female: ["Astrid", "Sigrid", "Freydis", "Ingrid", "Helga", "Runa", "Thyra", "Gerdur"],
+      male: ["Bjorn", "Ulfgar", "Ragnar", "Sigurd", "Torvald", "Halvard", "Eirik", "Stennar", "Hadvar", "Ralof", "Vilkas", "Farkas", "Skjor", "Kodlak", "Galmar", "Brunwulf", "Torygg", "Asgeir"],
+      female: ["Astrid", "Sigrid", "Freydis", "Ingrid", "Helga", "Runa", "Thyra", "Gerdur", "Lydia", "Jordis", "Hulda", "Karita", "Frea", "Borghild", "Solveig", "Yrsa", "Tova", "Bryling"],
     },
     Imperial: {
-      male: ["Marcus", "Quintus", "Lucius", "Decimus", "Titus", "Cassius", "Varro", "Albano"],
-      female: ["Aurelia", "Livia", "Octavia", "Vittoria", "Camilla", "Carmella", "Faustina", "Severa"],
+      male: ["Marcus", "Quintus", "Lucius", "Decimus", "Titus", "Cassius", "Varro", "Albano", "Hadrian", "Severio", "Amaund", "Tullius", "Proventus", "Gaius", "Octavian", "Silus", "Atticus", "Vantus"],
+      female: ["Aurelia", "Livia", "Octavia", "Vittoria", "Camilla", "Carmella", "Faustina", "Severa", "Carlotta", "Adrianne", "Severia", "Lucilla", "Antonia", "Claudia", "Valeria", "Marcella", "Flavia", "Iulia"],
     },
     Breton: {
-      male: ["Tristan", "Alain", "Gaston", "Etienne", "Emeric", "Roland", "Maurice", "Cyrelian"],
-      female: ["Colette", "Yvette", "Margaux", "Elise", "Sybille", "Aurore", "Jeanne", "Mirabelle"],
+      male: ["Tristan", "Alain", "Gaston", "Etienne", "Emeric", "Roland", "Maurice", "Cyrelian", "Belethor", "Delvin", "Mercer", "Adrien", "Bastien", "Corentin", "Damien", "Gaspard", "Lucien", "Thierry"],
+      female: ["Colette", "Yvette", "Margaux", "Elise", "Sybille", "Aurore", "Jeanne", "Mirabelle", "Babette", "Muiri", "Bothela", "Senna", "Vivienne", "Adeline", "Camille", "Giselle", "Noelle", "Rosaline"],
     },
     Redguard: {
-      male: ["Cyrus", "Kematu", "Azhar", "Rashid", "Samir", "Jawanan", "Nazir", "Tahir"],
-      female: ["Saadia", "Zaynabi", "Tahirah", "Iman", "Rayya", "Nashita", "Umana", "Sahar"],
+      male: ["Cyrus", "Kematu", "Azhar", "Rashid", "Samir", "Jawanan", "Nazir", "Tahir", "Ahtar", "Amren", "Endon", "Falion", "Isran", "Sayyid", "Khalid", "Omar", "Yusuf", "Zafir"],
+      female: ["Saadia", "Zaynabi", "Tahirah", "Iman", "Rayya", "Nashita", "Umana", "Sahar", "Faleen", "Kerah", "Seren", "Yisra", "Najla", "Basira", "Halima", "Samira", "Zahra", "Marwa"],
     },
     Altmer: {
-      male: ["Nelacar", "Quaranir", "Estormo", "Tandil", "Vingalmo", "Ondolemar", "Sanyon", "Rulindil"],
-      female: ["Niranye", "Taarie", "Endarie", "Nirya", "Alwen", "Cirwen", "Elenya", "Faralda"],
+      male: ["Nelacar", "Quaranir", "Estormo", "Tandil", "Vingalmo", "Ondolemar", "Sanyon", "Rulindil", "Ancano", "Calcelmo", "Aicantar", "Runil", "Nerien", "Valmir", "Earmil", "Quarion", "Larethor", "Sinderion"],
+      female: ["Niranye", "Taarie", "Endarie", "Nirya", "Alwen", "Cirwen", "Elenya", "Faralda", "Elenwen", "Arivanya", "Naryelle", "Calienne", "Synwe", "Elarie", "Mirilwen", "Anariel", "Quelinde", "Tanriel"],
     },
     Bosmer: {
-      male: ["Faendal", "Anoriath", "Niruin", "Gwilin", "Malborn", "Elrindir", "Valindor", "Cuinanthil"],
-      female: ["Nimriel", "Nivenor", "Brelas", "Anwen", "Sylgja", "Lirielle", "Ardwen", "Galathil"],
+      male: ["Faendal", "Anoriath", "Niruin", "Gwilin", "Malborn", "Elrindir", "Valindor", "Cuinanthil", "Enthir", "Aringoth", "Thaeryn", "Caelon", "Faelor", "Dorthil", "Elsyor", "Nathir", "Gwaelor", "Erithor"],
+      female: ["Nimriel", "Nivenor", "Brelas", "Anwen", "Sylgja", "Lirielle", "Ardwen", "Galathil", "Faelwen", "Caemlin", "Nelwith", "Sorileth", "Adanya", "Mirenel", "Lethiel", "Wenaya", "Cuiniel", "Dorwen"],
     },
     Dunmer: {
-      male: ["Athis", "Sadri", "Romlyn", "Erandur", "Ralen", "Fethis", "Teldryn", "Drevis"],
-      female: ["Brelyna", "Dravynea", "Irileth", "Suvaris", "Aduri", "Avrusa", "Jenassa", "Voldsea"],
+      male: ["Athis", "Sadri", "Romlyn", "Erandur", "Ralen", "Fethis", "Teldryn", "Drevis", "Brand-Shei", "Revyn", "Malthyr", "Ambarys", "Belyn", "Faryl", "Adril", "Geldis", "Tythis", "Drovas"],
+      female: ["Brelyna", "Dravynea", "Irileth", "Suvaris", "Aduri", "Avrusa", "Jenassa", "Voldsea", "Aranea", "Mirri", "Dreyla", "Cindiri", "Elynea", "Varona", "Selveni", "Tilisu", "Nilara", "Sadrith"],
     },
     Orsimer: {
-      male: ["Ghorbash", "Yamarz", "Durak", "Ogol", "Mauhulakh", "Lurbuk", "Gat", "Urag"],
-      female: ["Borgakh", "Ugor", "Shel", "Gharol", "Bagrak", "Atub", "Mor", "Lash"],
+      male: ["Ghorbash", "Yamarz", "Durak", "Ogol", "Mauhulakh", "Lurbuk", "Gat", "Urag", "Borkul", "Moth", "Larak", "Gularzob", "Dushnamub", "Oglub", "Grogmar", "Umurn", "Nagrub", "Garakh"],
+      female: ["Borgakh", "Ugor", "Shel", "Gharol", "Bagrak", "Atub", "Mor", "Lash", "Urzoga", "Murbul", "Sharamph", "Yatul", "Bolar", "Arob", "Batum", "Ghak", "Shuftharz", "Urog"],
     },
     Argonian: {
-      male: ["Veezara", "Derkeethus", "Jaree-Ra", "Madesi", "Neetrenaza", "Watches-The-Roots", "Scouts-Many-Marshes", "Teeba-Ei"],
-      female: ["Shahvee", "Keerava", "Wujeeta", "Deeja", "From-Deepest-Fathoms", "Hides-Her-Eyes", "Swims-In-Starlight", "Drips-No-Sap"],
+      male: ["Veezara", "Derkeethus", "Jaree-Ra", "Madesi", "Neetrenaza", "Watches-The-Roots", "Scouts-Many-Marshes", "Teeba-Ei", "Talen-Jei", "Gulum-Ei", "Stands-In-Shallows", "Walks-Softly", "Seven-Scales", "Drinks-Deep-Water", "Basks-In-Sun", "Green-Tail", "Swift-Current", "Iron-Jaw"],
+      female: ["Shahvee", "Keerava", "Wujeeta", "Deeja", "From-Deepest-Fathoms", "Hides-Her-Eyes", "Swims-In-Starlight", "Drips-No-Sap", "Sings-To-Rivers", "Sees-All-Colors", "Whispers-Of-Reeds", "Watches-The-Tides", "Nine-Fins", "Glides-Through-Mist", "Pale-Scales", "Marsh-Daughter", "Two-Rivers", "Bright-Throat"],
     },
     Khajiit: {
-      male: ["J'zargo", "Kharjo", "Dro'marash", "Ra'jirr", "J'datharr", "Ma'dran", "Vasha", "Ri'saad"],
-      female: ["Ahkari", "Atahbah", "Khayla", "Tsavani", "Ra'zhinda", "Shuravi", "Kishra-do", "Ahjisi"],
+      male: ["J'zargo", "Kharjo", "Dro'marash", "Ra'jirr", "J'datharr", "Ma'dran", "Vasha", "Ri'saad", "M'aiq", "J'darr", "Ra'kheran", "Jo'khar", "Dro'zhirr", "Ma'tasarr", "S'rashi", "J'baasim", "Ra'virr", "Dar'khazu"],
+      female: ["Ahkari", "Atahbah", "Khayla", "Tsavani", "Ra'zhinda", "Shuravi", "Kishra-do", "Ahjisi", "Ki'sharra", "La'shuni", "Daro'vasora", "Anjheri", "Tsabhi", "Shazara", "Mirzin", "Baira", "Inari", "Zhanara"],
     },
   },
 };
