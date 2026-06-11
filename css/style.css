@@ -429,6 +429,26 @@ main {
   font-size: 1.05rem;
 }
 
+/* Non-clickable rows for the setup-file tutorial */
+.modal-step {
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-step:last-child {
+  border-bottom: none;
+}
+
+.modal-step .card-value {
+  font-size: 1.05rem;
+}
+
+.modal-step .card-desc {
+  font-style: normal;
+  line-height: 1.5;
+  margin-top: 0.3rem;
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {

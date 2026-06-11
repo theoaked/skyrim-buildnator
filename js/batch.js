@@ -204,6 +204,53 @@ function buildBatchFile() {
   return L.join("\n") + "\n";
 }
 
+// Tutorial popup shown alongside the download, reusing the options modal
+// shell (its close button, overlay click, and Escape already work).
+function openBatchTutorial() {
+  const c = state.character.items[0];
+  const female = c.description.startsWith("Female");
+  const race = state.race.items[0].name;
+  const affliction = state.affliction.items[0].name;
+  document.getElementById("modal-title").textContent = "Skyrim Setup File — how to use";
+  const hint = document.getElementById("modal-hint");
+  hint.textContent = "buildnator.txt is downloading. It sets " + c.name + " up in a new game — Skyrim SE/AE on PC only.";
+  hint.className = "modal-hint";
+  const body = document.getElementById("modal-body");
+  body.innerHTML = "";
+
+  const steps = [
+    ["1 · Put the file in the Skyrim folder",
+      "Move the downloaded buildnator.txt to the folder that contains SkyrimSE.exe — usually C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition."],
+    ["2 · Start a new game",
+      "In character creation, pick what the console can't set for you: race " + race + ", " + (female ? "female" : "male") + ", and the name " + c.name + ". Appearance is all yours."],
+    ["3 · Run the batch",
+      "Once you can move freely, open the console with the ` / ~ key (below Esc) and type: bat buildnator — then press Enter and close the console with the same key."],
+    ["4 · Live your destiny",
+      "Skills, standing stone, gear, spells and gold are applied instantly."
+      + (affliction === "Vampire" || affliction === "Vampire Lord"
+        ? " You've been infected with Sanguinare Vampiris — vampirism sets in after ~3 in-game days."
+        : affliction === "Werewolf" ? " Beast blood already runs in your veins — transform via the Powers menu." : "")
+      + " The file itself is your build sheet: faction directions and your roleplay oath are written in its comments."],
+    ["A note on achievements",
+      "Using the console disables achievements for that session on SE/AE. Save after running the batch and reload — achievements come back."],
+  ];
+
+  for (const [title, text] of steps) {
+    const row = document.createElement("div");
+    row.className = "modal-step";
+    const name = document.createElement("p");
+    name.className = "card-value";
+    name.textContent = title;
+    row.appendChild(name);
+    const desc = document.createElement("p");
+    desc.className = "card-desc";
+    desc.textContent = text;
+    row.appendChild(desc);
+    body.appendChild(row);
+  }
+  document.getElementById("modal-overlay").classList.remove("hidden");
+}
+
 function downloadBatch() {
   const blob = new Blob([buildBatchFile()], { type: "text/plain" });
   const a = document.createElement("a");
@@ -213,6 +260,7 @@ function downloadBatch() {
   a.click();
   a.remove();
   URL.revokeObjectURL(a.href);
+  openBatchTutorial();
 }
 
 document.getElementById("batch-btn").addEventListener("click", downloadBatch);
