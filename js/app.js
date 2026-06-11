@@ -12,8 +12,8 @@ const CATEGORIES = [
   { id: "armor", label: "Armor", pool: BUILD_DATA.armor, count: 1 },
   { id: "weapon", label: "Weapon of Choice" },
   { id: "magicSchools", label: "Magic Schools" },
-  { id: "affliction", label: "Affliction", pool: BUILD_DATA.affliction, count: 1 },
-  { id: "faction", label: "Faction", pool: BUILD_DATA.faction, count: 1 },
+  { id: "affliction", label: "Affliction" },
+  { id: "faction", label: "Faction" },
   { id: "deity", label: "Deity", pool: BUILD_DATA.deity, count: 1 },
   { id: "morality", label: "Morality", pool: BUILD_DATA.morality, count: 1 },
   { id: "roleplayRules", label: "Roleplay Rules" },
@@ -176,6 +176,26 @@ function rollArmor() {
   setItems("armor", sample(BUILD_DATA.armor.filter(armorFits), 1));
 }
 
+// Faction and affliction roll as a coherent pair: a locked affliction keeps
+// incompatible factions out of the pool, and the affliction roll always
+// respects the current faction.
+function rollFaction() {
+  let pool = BUILD_DATA.faction;
+  if (isLocked("affliction")) {
+    const incompatible = state.affliction.items[0].incompatibleFactions || [];
+    pool = pool.filter((f) => !incompatible.includes(f.name));
+  }
+  setItems("faction", sample(pool, 1));
+}
+
+function rollAffliction() {
+  const faction = state.faction.items[0].name;
+  const pool = BUILD_DATA.affliction.filter(
+    (a) => !(a.incompatibleFactions || []).includes(faction)
+  );
+  setItems("affliction", sample(pool, 1));
+}
+
 function rulesConflict(a, b) {
   return BUILD_DATA.ruleConflicts.some((group) => group.includes(a) && group.includes(b));
 }
@@ -208,7 +228,7 @@ function rollCharacter() {
 }
 
 // Categories with custom roll logic, handled in dependency order below.
-const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules"];
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules", "faction", "affliction"];
 
 let narrativeText = "";
 
@@ -265,6 +285,8 @@ function generateAll() {
     if (isLocked(cat.id) || SPECIAL_IDS.includes(cat.id)) continue;
     state[cat.id] = rollCategory(cat);
   }
+  if (!isLocked("faction")) rollFaction();
+  if (!isLocked("affliction")) rollAffliction();
   if (!isLocked("weapon")) rollWeapon();
   if (!isLocked("skills")) rollSkills(); // locked skills need no fix: weapon roll was constrained to them
   if (!isLocked("magicSchools")) rollMagicSchools();

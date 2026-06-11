@@ -204,11 +204,13 @@ const BUILD_DATA = {
     ["Never Alone", "Lone Wolf"],
   ],
 
+  // `incompatibleFactions` keeps lore-breaking pairs from rolling together
+  // (in both directions when either card is locked).
   affliction: [
     { name: "None", description: "A pure mortal. Sleep at night, walk in the sun, keep your soul." },
-    { name: "Werewolf", description: "The blood of Hircine runs in your veins. Beast Form when the hunt calls." },
-    { name: "Vampire", description: "A creature of the night. Feed regularly — or stop pretending to be one of them." },
-    { name: "Vampire Lord", description: "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard)." },
+    { name: "Werewolf", description: "The blood of Hircine runs in your veins. Beast Form when the hunt calls.", incompatibleFactions: ["Volkihar Vampires"] },
+    { name: "Vampire", description: "A creature of the night. Feed regularly — or stop pretending to be one of them.", incompatibleFactions: ["Dawnguard", "The Companions"] },
+    { name: "Vampire Lord", description: "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard).", incompatibleFactions: ["Dawnguard", "The Companions"] },
   ],
 
   // Sentence templates for the character backstory. Placeholders are filled
