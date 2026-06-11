@@ -27,7 +27,7 @@ if (Test-Path $genData) {
 # --- 2. Build Buildnator.esp with the Mutagen generator ---
 Write-Host "== esp generator ==" -ForegroundColor Cyan
 $esp = Join-Path $outDir "Buildnator.esp"
-dotnet run --project (Join-Path $modRoot "Generator") -c Release -- $esp
+dotnet run --project (Join-Path $modRoot "Generator") -c Release -- $esp (Join-Path $modRoot "generated\data.json")
 if ($LASTEXITCODE -ne 0) { throw "esp generator failed" }
 
 # --- 3. Compile Papyrus scripts ---

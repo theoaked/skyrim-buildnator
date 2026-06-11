@@ -269,6 +269,7 @@ fs.writeFileSync(path.join(outDir, "BLD_Data.psc"), out.join("\n") + "\n");
 
 const menus = {
   race: D.race.map((r) => r.name),
+  archetype: D.archetype.map((a) => a.name),
   skills: D.skills.map((s) => s.name),
   standingStone: D.standingStone.map((s) => s.name),
   combatStyle: D.combatStyle.map((s) => s.name),

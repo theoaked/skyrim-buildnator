@@ -159,15 +159,9 @@ EndFunction
 
 ; ---------- skills ----------
 
-; 3 distinct skills; the weapon's governing skill is always included and
-; conflict-group skills never roll together.
-String[] Function RollSkills(String weaponSkill) Global
-    String[] picked = new String[3]
-    Int n = 0
-    If weaponSkill != ""
-        picked[0] = weaponSkill
-        n = 1
-    EndIf
+; Completes a left-packed partial pick to 3 conflict-free distinct skills.
+String[] Function FillSkills(String[] picked) Global
+    Int n = CountFilled(picked)
     String[] pool = BLD_Data.SkillNames()
     Int[] order = ShuffledIndexes(pool.Length)
     Int i = 0
@@ -180,6 +174,16 @@ String[] Function RollSkills(String weaponSkill) Global
         i += 1
     EndWhile
     Return picked
+EndFunction
+
+; 3 distinct skills; the weapon's governing skill is always included and
+; conflict-group skills never roll together.
+String[] Function RollSkills(String weaponSkill) Global
+    String[] picked = new String[3]
+    If weaponSkill != ""
+        picked[0] = weaponSkill
+    EndIf
+    Return FillSkills(picked)
 EndFunction
 
 ; Validation shared with the manual wizard: distinct + no conflict pair.
@@ -289,14 +293,13 @@ Bool Function CanAddRule(String[] picked, String candidate) Global
     Return True
 EndFunction
 
-; 4 rules, ""-padded String[8] (the wizard can grow the set to 8).
-String[] Function RollRules(Bool hasMagic, String weaponName, Bool hasDaedra, String deityName, String factionName) Global
-    String[] picked = new String[8]
+; Completes a left-packed rule set up to target with fitting, non-conflicting rules.
+String[] Function FillRules(String[] picked, Int target, Bool hasMagic, String weaponName, Bool hasDaedra, String deityName, String factionName) Global
+    Int n = CountFilled(picked)
     String[] names = BLD_Data.RuleNames()
     Int[] order = ShuffledIndexes(names.Length)
-    Int n = 0
     Int i = 0
-    While i < names.Length && n < 4
+    While i < names.Length && n < target
         Int c = order[i]
         If RuleFits(c, hasMagic, weaponName, hasDaedra, deityName, factionName) && CanAddRule(picked, names[c])
             picked[n] = names[c]
@@ -305,6 +308,11 @@ String[] Function RollRules(Bool hasMagic, String weaponName, Bool hasDaedra, St
         i += 1
     EndWhile
     Return picked
+EndFunction
+
+; 4 rules, ""-padded String[8] (the wizard can grow the set to 8).
+String[] Function RollRules(Bool hasMagic, String weaponName, Bool hasDaedra, String deityName, String factionName) Global
+    Return FillRules(new String[8], 4, hasMagic, weaponName, hasDaedra, deityName, factionName)
 EndFunction
 
 ; ---------- combat style ----------
