@@ -299,6 +299,47 @@ function toggleLock(catId) {
   render();
 }
 
+// All options shown by the per-card 📜 button. For the character card the
+// options are the name pools, grouped by race.
+function optionsFor(catId) {
+  if (catId === "character") {
+    return Object.keys(BUILD_DATA.names).map((race) => ({
+      name: race,
+      description:
+        "Male: " + BUILD_DATA.names[race].male.join(", ") +
+        " — Female: " + BUILD_DATA.names[race].female.join(", "),
+    }));
+  }
+  if (catId === "magicSchools") return [NONE_ENTRY].concat(BUILD_DATA.magicSchools);
+  return BUILD_DATA[catId];
+}
+
+function openOptionsModal(cat) {
+  document.getElementById("modal-title").textContent = cat.label + " — all options";
+  const body = document.getElementById("modal-body");
+  body.innerHTML = "";
+  for (const option of optionsFor(cat.id)) {
+    const row = document.createElement("div");
+    row.className = "modal-option";
+    const name = document.createElement("p");
+    name.className = "card-value";
+    name.textContent = option.name;
+    row.appendChild(name);
+    if (option.description) {
+      const desc = document.createElement("p");
+      desc.className = "card-desc";
+      desc.textContent = option.description;
+      row.appendChild(desc);
+    }
+    body.appendChild(row);
+  }
+  document.getElementById("modal-overlay").classList.remove("hidden");
+}
+
+function closeOptionsModal() {
+  document.getElementById("modal-overlay").classList.add("hidden");
+}
+
 function render() {
   document.getElementById("narrative").textContent = narrativeText;
   const grid = document.getElementById("build-grid");
@@ -317,6 +358,13 @@ function render() {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
+    const optionsBtn = document.createElement("button");
+    optionsBtn.className = "icon-btn";
+    optionsBtn.title = "View all " + cat.label + " options";
+    optionsBtn.setAttribute("aria-label", "View all " + cat.label + " options");
+    optionsBtn.textContent = "\u{1F4DC}";
+    optionsBtn.addEventListener("click", () => openOptionsModal(cat));
+
     const lockBtn = document.createElement("button");
     lockBtn.className = "icon-btn" + (entry.locked ? " active" : "");
     lockBtn.title = (entry.locked ? "Unlock " : "Lock ") + cat.label;
@@ -324,7 +372,7 @@ function render() {
     lockBtn.textContent = entry.locked ? "\u{1F512}" : "\u{1F513}";
     lockBtn.addEventListener("click", () => toggleLock(cat.id));
 
-    actions.append(lockBtn);
+    actions.append(optionsBtn, lockBtn);
     header.append(label, actions);
     card.appendChild(header);
 
@@ -367,5 +415,12 @@ function copyBuild() {
 
 document.getElementById("generate-btn").addEventListener("click", generateAll);
 document.getElementById("copy-btn").addEventListener("click", copyBuild);
+document.getElementById("modal-close").addEventListener("click", closeOptionsModal);
+document.getElementById("modal-overlay").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closeOptionsModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeOptionsModal();
+});
 
 generateAll();
