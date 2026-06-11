@@ -6,7 +6,6 @@ const CATEGORIES = [
   { id: "character", label: "Character" },
   { id: "race", label: "Race", pool: BUILD_DATA.race, count: 1 },
   { id: "archetype", label: "Archetype" },
-  { id: "dragonborn", label: "Dragonborn" },
   { id: "skills", label: "Primary Skills" },
   { id: "standingStone", label: "Standing Stone", pool: BUILD_DATA.standingStone, count: 1 },
   { id: "combatStyle", label: "Combat Style" },
@@ -24,6 +23,10 @@ const NONE_ENTRY = { name: "None", description: "Magic is for the weak." };
 
 // state[id] = { items: [...], locked: boolean }
 const state = {};
+
+// Dragonborn is a user choice (the checkbox next to the controls), not a
+// rolled card. It gates the "Shouts First" combat style.
+let isDragonborn = false;
 
 function sample(pool, n) {
   const copy = pool.slice();
@@ -74,6 +77,7 @@ function lockedRuleFlags() {
   return {
     requiresMagic: items.some((r) => r.requiresMagic),
     requiresNoMagic: items.some((r) => r.requiresNoMagic),
+    noDaedra: items.some((r) => r.noDaedra),
     incompatibleWeapons: items.map((r) => r.incompatibleWeapon).filter(Boolean),
   };
 }
@@ -184,16 +188,8 @@ function fitsBuild(entry) {
   if (r.magicSchoolIn && !schools.some((s) => r.magicSchoolIn.includes(s))) return false;
   if (r.anyMagic && schools.length === 0) return false;
   if (r.armorIn && !r.armorIn.includes(state.armor.items[0].name)) return false;
-  if (r.dragonborn && state.dragonborn.items[0].name !== "Dragonborn") return false;
+  if (r.dragonborn && !isDragonborn) return false;
   return true;
-}
-
-// Dragonborn rolls before combat style: a locked "Shouts First" style means
-// the character must be Dragonborn.
-function rollDragonborn() {
-  let pool = BUILD_DATA.dragonborn;
-  if (lockedStyleRequires().dragonborn) pool = pool.filter((d) => d.name === "Dragonborn");
-  setItems("dragonborn", sample(pool, 1));
 }
 
 // Combat style rolls from the styles the rest of the build supports.
@@ -227,21 +223,24 @@ function rollArmor() {
 
 // Faction and affliction roll as a coherent pair: a locked affliction keeps
 // incompatible factions out of the pool, and the affliction roll always
-// respects the current faction.
+// respects the current faction. Locked Vigilant-style rules (noDaedra) keep
+// daedric factions and afflictions out.
 function rollFaction() {
   let pool = BUILD_DATA.faction;
   if (isLocked("affliction")) {
     const incompatible = state.affliction.items[0].incompatibleFactions || [];
     pool = pool.filter((f) => !incompatible.includes(f.name));
   }
+  if (lockedRuleFlags().noDaedra) pool = pool.filter((f) => !f.daedric);
   setItems("faction", sample(pool, 1));
 }
 
 function rollAffliction() {
   const faction = state.faction.items[0].name;
-  const pool = BUILD_DATA.affliction.filter(
+  let pool = BUILD_DATA.affliction.filter(
     (a) => !(a.incompatibleFactions || []).includes(faction)
   );
+  if (lockedRuleFlags().noDaedra) pool = pool.filter((a) => !a.daedric);
   setItems("affliction", sample(pool, 1));
 }
 
@@ -249,9 +248,20 @@ function rulesConflict(a, b) {
   return BUILD_DATA.ruleConflicts.some((group) => group.includes(a) && group.includes(b));
 }
 
+// True when the build has anything daedric a Vigilant of Stendarr would
+// refuse: a daedric deity, affliction, or faction.
+function buildHasDaedra() {
+  return Boolean(
+    state.deity.items[0].daedric ||
+    state.affliction.items[0].daedric ||
+    state.faction.items[0].daedric
+  );
+}
+
 // Roleplay rules roll after magic schools: rules flagged requiresMagic only
-// fit magic-oriented builds, rules incompatible with the rolled weapon are
-// skipped, and contradicting rules never roll together.
+// fit magic-oriented builds, rules incompatible with the rolled weapon or
+// with the build's daedric ties are skipped, and contradicting rules never
+// roll together.
 function rollRoleplayRules() {
   const hasMagic = currentMagicSchools().length > 0;
   const weaponName = state.weapon.items[0].name;
@@ -261,6 +271,7 @@ function rollRoleplayRules() {
     if (candidate.requiresMagic && !hasMagic) continue;
     if (candidate.requiresNoMagic && hasMagic) continue;
     if (candidate.incompatibleWeapon === weaponName) continue;
+    if (candidate.noDaedra && buildHasDaedra()) continue;
     if (picked.some((p) => rulesConflict(p.name, candidate.name))) continue;
     picked.push(candidate);
   }
@@ -277,7 +288,7 @@ function rollCharacter() {
 }
 
 // Categories with custom roll logic, handled in dependency order below.
-const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "archetype", "dragonborn", "roleplayRules", "faction", "affliction"];
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "archetype", "roleplayRules", "faction", "affliction"];
 
 let narrativeText = "";
 
@@ -317,7 +328,7 @@ function buildNarrative() {
   const sentences = [pick(N.openings), pick(N.paths), pick(N.creeds)];
   const afflictionLine = N.afflictions[state.affliction.items[0].name];
   if (afflictionLine) sentences.push(afflictionLine);
-  if (state.dragonborn.items[0].name === "Dragonborn") sentences.push(pick(N.dragonborn));
+  if (isDragonborn) sentences.push(pick(N.dragonborn));
   sentences.push(pick(faction === "None" ? N.fatesAlone : N.fates));
 
   return sentences
@@ -329,12 +340,15 @@ function buildNarrative() {
 function generateAll() {
   // Plain categories first (race before character), then the dependent chain:
   // weapon -> skills (must include the weapon's skill) -> magic schools ->
-  // armor and roleplay rules (both magic-aware) -> dragonborn -> combat style
-  // and archetype (both picked from what the build supports) -> character
-  // name -> backstory.
+  // armor and roleplay rules (both magic-aware) -> combat style and archetype
+  // (both picked from what the build supports) -> character name -> backstory.
   for (const cat of CATEGORIES) {
     if (isLocked(cat.id) || SPECIAL_IDS.includes(cat.id)) continue;
     state[cat.id] = rollCategory(cat);
+  }
+  // Locked Vigilant-style rules forbid daedric deities the generic loop rolled.
+  if (!isLocked("deity") && lockedRuleFlags().noDaedra && state.deity.items[0].daedric) {
+    setItems("deity", sample(BUILD_DATA.deity.filter((d) => !d.daedric), 1));
   }
   if (!isLocked("faction")) rollFaction();
   if (!isLocked("affliction")) rollAffliction();
@@ -343,7 +357,6 @@ function generateAll() {
   if (!isLocked("magicSchools")) rollMagicSchools();
   if (!isLocked("armor")) rollArmor();
   if (!isLocked("roleplayRules")) rollRoleplayRules();
-  if (!isLocked("dragonborn")) rollDragonborn();
   if (!isLocked("combatStyle")) rollCombatStyle();
   if (!isLocked("archetype")) rollArchetype();
   if (!isLocked("character")) rollCharacter();
@@ -356,6 +369,191 @@ function toggleLock(catId) {
   render();
 }
 
+// ---------- Choosing an option from the popup ----------
+// A direct choice outranks locks: every card that no longer fits the chosen
+// value is rerolled, locked or not (the lock flag itself is preserved). The
+// *FitsNow checks mirror the constraints each roll function enforces, so a
+// card is only rerolled when it actually became incoherent.
+
+function weaponFitsNow() {
+  const w = state.weapon.items[0];
+  if (w.skill && !currentSkillNames().includes(w.skill)) return false;
+  const req = lockedStyleRequires();
+  if (req.weaponName && w.name !== req.weaponName) return false;
+  if (req.weaponSkill && w.skill !== req.weaponSkill) return false;
+  const archReq = lockedArchetypeRequires();
+  if (archReq.weaponName && w.name !== archReq.weaponName) return false;
+  if (archReq.weaponSkillIn && !archReq.weaponSkillIn.includes(w.skill)) return false;
+  const armorReq = lockedArmorRequires();
+  if (armorReq.weaponSkillNot && armorReq.weaponSkillNot.includes(w.skill)) return false;
+  if (lockedRuleFlags().incompatibleWeapons.includes(w.name)) return false;
+  return true;
+}
+
+function skillsFitNow() {
+  const sk = currentSkillNames();
+  const weaponSkill = state.weapon.items[0].skill;
+  if (weaponSkill && !sk.includes(weaponSkill)) return false;
+  const req = lockedStyleRequires();
+  if (req.skill && !sk.includes(req.skill)) return false;
+  if (req.excludeSkills && sk.some((s) => req.excludeSkills.includes(s))) return false;
+  const archSkillIn = lockedArchetypeRequires().skillIn;
+  if (archSkillIn && !sk.some((s) => archSkillIn.includes(s))) return false;
+  return true;
+}
+
+function magicFitsNow() {
+  const schools = currentMagicSchools();
+  const flags = lockedRuleFlags();
+  if (flags.requiresNoMagic && schools.length > 0) return false;
+  if (flags.requiresMagic && schools.length === 0) return false;
+  const req = lockedStyleRequires();
+  if (req.magicSchool && !schools.includes(req.magicSchool)) return false;
+  const archReq = lockedArchetypeRequires();
+  if (archReq.magicSchool && !schools.includes(archReq.magicSchool)) return false;
+  if (archReq.magicSchoolIn && !schools.some((s) => archReq.magicSchoolIn.includes(s))) return false;
+  const needAny = req.anyMagic || archReq.anyMagic || lockedArmorRequires().anyMagic;
+  if (needAny && schools.length === 0) return false;
+  return true;
+}
+
+function armorFitsNow() {
+  if (!armorFits(state.armor.items[0])) return false;
+  const archArmorIn = lockedArchetypeRequires().armorIn;
+  if (archArmorIn && !archArmorIn.includes(state.armor.items[0].name)) return false;
+  return true;
+}
+
+function rulesFitNow() {
+  const hasMagic = currentMagicSchools().length > 0;
+  const weaponName = state.weapon.items[0].name;
+  for (const rule of state.roleplayRules.items) {
+    if (rule.requiresMagic && !hasMagic) return false;
+    if (rule.requiresNoMagic && hasMagic) return false;
+    if (rule.incompatibleWeapon === weaponName) return false;
+    if (rule.noDaedra && buildHasDaedra()) return false;
+  }
+  return true;
+}
+
+// The chosen skill joins the set; current skills are kept where they don't
+// conflict with it, then the set is refilled to 3.
+function chooseSkill(option) {
+  const picked = [option];
+  const candidates = state.skills.items.concat(sample(BUILD_DATA.skills, BUILD_DATA.skills.length));
+  for (const candidate of candidates) {
+    if (picked.length === 3) break;
+    if (picked.some((p) => p.name === candidate.name || skillsConflict(p.name, candidate.name))) continue;
+    picked.push(candidate);
+  }
+  setItems("skills", picked);
+}
+
+// The chosen school becomes part of the set (keeping at most one current
+// school as company); "None" clears all schools.
+function chooseMagicSchool(option) {
+  if (option.name === "None") {
+    setItems("magicSchools", [NONE_ENTRY]);
+    return;
+  }
+  const others = state.magicSchools.items.filter((i) => i.name !== "None" && i.name !== option.name);
+  setItems("magicSchools", [option].concat(others.slice(0, 1)));
+}
+
+// The chosen rule joins the set; current rules that don't contradict it are
+// kept, then the set is refilled to 4 with rules that fit the current build.
+function chooseRule(option) {
+  if (state.roleplayRules.items.some((r) => r.name === option.name)) return;
+  const hasMagic = currentMagicSchools().length > 0;
+  const weaponName = state.weapon.items[0].name;
+  const picked = [option];
+  const candidates = state.roleplayRules.items.concat(sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length));
+  for (const candidate of candidates) {
+    if (picked.length === 4) break;
+    if (picked.some((p) => p.name === candidate.name || rulesConflict(p.name, candidate.name))) continue;
+    if (candidate.requiresMagic && picked.some((p) => p.requiresNoMagic)) continue;
+    if (candidate.requiresNoMagic && picked.some((p) => p.requiresMagic)) continue;
+    if (candidate !== option) {
+      if (candidate.requiresMagic && !hasMagic) continue;
+      if (candidate.requiresNoMagic && hasMagic) continue;
+      if (candidate.incompatibleWeapon === weaponName) continue;
+      if (candidate.noDaedra && buildHasDaedra()) continue;
+    }
+    picked.push(candidate);
+  }
+  setItems("roleplayRules", picked);
+}
+
+// After a choice, walk the dependency chain and reroll whatever stopped
+// fitting. The chosen card is pinned (temporarily locked) so every roll
+// respects it; all other locks are suspended for the pass — their cards are
+// kept when they still fit and rerolled when they don't — then restored.
+function reconcile(chosenId) {
+  const savedLocks = {};
+  for (const cat of CATEGORIES) {
+    savedLocks[cat.id] = state[cat.id].locked;
+    state[cat.id].locked = cat.id === chosenId;
+  }
+
+  if (chosenId === "race" && !state.character.items[0].description.endsWith(" " + state.race.items[0].name)) {
+    rollCharacter();
+  }
+  if (chosenId !== "deity" && lockedRuleFlags().noDaedra && state.deity.items[0].daedric) {
+    setItems("deity", sample(BUILD_DATA.deity.filter((d) => !d.daedric), 1));
+  }
+  if (chosenId !== "faction" && lockedRuleFlags().noDaedra && state.faction.items[0].daedric) rollFaction();
+  if (chosenId !== "affliction" && lockedRuleFlags().noDaedra && state.affliction.items[0].daedric) rollAffliction();
+  const pairBroken = (state.affliction.items[0].incompatibleFactions || []).includes(state.faction.items[0].name);
+  if (pairBroken) {
+    if (chosenId === "affliction") rollFaction();
+    else rollAffliction();
+  }
+  if (chosenId !== "weapon" && !weaponFitsNow()) rollWeapon();
+  if (chosenId !== "skills" && !skillsFitNow()) rollSkills();
+  if (chosenId !== "magicSchools" && !magicFitsNow()) rollMagicSchools();
+  if (chosenId !== "armor" && !armorFitsNow()) rollArmor();
+  if (chosenId !== "roleplayRules" && !rulesFitNow()) rollRoleplayRules();
+  if (chosenId !== "combatStyle" && !fitsBuild(state.combatStyle.items[0])) rollCombatStyle();
+  if (chosenId !== "archetype" && !fitsBuild(state.archetype.items[0])) rollArchetype();
+
+  for (const cat of CATEGORIES) state[cat.id].locked = savedLocks[cat.id];
+}
+
+function applyChoice(cat, option) {
+  if (cat.id === "skills") chooseSkill(option);
+  else if (cat.id === "magicSchools") chooseMagicSchool(option);
+  else if (cat.id === "roleplayRules") chooseRule(option);
+  else setItems(cat.id, [option]);
+  // Choosing "Shouts First" makes the character Dragonborn — the Voice
+  // demands it.
+  if (cat.id === "combatStyle" && option.requires && option.requires.dragonborn) {
+    isDragonborn = true;
+    document.getElementById("dragonborn-toggle").checked = true;
+  }
+  reconcile(cat.id);
+  narrativeText = buildNarrative();
+  closeOptionsModal();
+  render();
+}
+
+// The Dragonborn checkbox. Turning it off while a locked "Shouts First"
+// style depends on it is refused; otherwise the style just rerolls.
+function setDragonborn(value) {
+  isDragonborn = value;
+  const styleNeedsIt = (state.combatStyle.items[0].requires || {}).dragonborn;
+  if (!value && styleNeedsIt) {
+    if (isLocked("combatStyle")) {
+      isDragonborn = true;
+      document.getElementById("dragonborn-toggle").checked = true;
+      return;
+    }
+    rollCombatStyle();
+    if (!fitsBuild(state.archetype.items[0]) && !isLocked("archetype")) rollArchetype();
+  }
+  narrativeText = buildNarrative();
+  render();
+}
+
 // All options shown by the per-card 📜 button (the character card has none —
 // its name pools are too long to be useful in a list).
 function optionsFor(catId) {
@@ -364,12 +562,16 @@ function optionsFor(catId) {
 }
 
 function openOptionsModal(cat) {
-  document.getElementById("modal-title").textContent = cat.label + " — all options";
+  document.getElementById("modal-title").textContent = cat.label + " — pick an option";
   const body = document.getElementById("modal-body");
   body.innerHTML = "";
+  const currentNames = state[cat.id].items.map((i) => i.name);
   for (const option of optionsFor(cat.id)) {
-    const row = document.createElement("div");
-    row.className = "modal-option";
+    const row = document.createElement("button");
+    row.className = "modal-option" + (currentNames.includes(option.name) ? " current" : "");
+    row.setAttribute("type", "button");
+    row.title = "Use " + option.name;
+    row.addEventListener("click", () => applyChoice(cat, option));
     const name = document.createElement("p");
     name.className = "card-value";
     name.textContent = option.name;
@@ -450,6 +652,7 @@ function buildSummary() {
   for (const cat of CATEGORIES) {
     const names = state[cat.id].items.map((i) => i.name).join(", ");
     lines.push(cat.label + ": " + names);
+    if (cat.id === "race") lines.push("Dragonborn: " + (isDragonborn ? "Yes" : "No"));
   }
   lines.push("", narrativeText);
   lines.push("", "Rolled at https://theoaked.github.io/skyrim-buildnator/");
@@ -467,6 +670,9 @@ function copyBuild() {
 
 document.getElementById("generate-btn").addEventListener("click", generateAll);
 document.getElementById("copy-btn").addEventListener("click", copyBuild);
+document.getElementById("dragonborn-toggle").addEventListener("change", (e) => {
+  setDragonborn(e.target.checked);
+});
 document.getElementById("modal-close").addEventListener("click", closeOptionsModal);
 document.getElementById("modal-overlay").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) closeOptionsModal();

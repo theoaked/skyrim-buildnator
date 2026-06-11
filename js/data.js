@@ -52,11 +52,6 @@ const BUILD_DATA = {
     { name: "Forsworn Outcast", description: "Fur, feathers, and fury. The Reach remembers what was taken.", requires: { armorIn: ["Light Armor", "Clothes Only"] } },
   ],
 
-  dragonborn: [
-    { name: "Dragonborn", description: "DOVAHKIIN! The blood of dragons burns in you — Shouts, souls, and a destiny written by Akatosh." },
-    { name: "Mere Mortal", description: "No prophecy, no dragon soul. Just grit, steel, and stubbornness." },
-  ],
-
   skills: [
     { name: "One-Handed" }, { name: "Two-Handed" }, { name: "Archery" },
     { name: "Block" }, { name: "Smithing" }, { name: "Heavy Armor" },
@@ -147,7 +142,7 @@ const BUILD_DATA = {
     { name: "Imperial Legion", description: "Unite Skyrim under the Empire's banner." },
     { name: "Stormcloaks", description: "Skyrim belongs to the Nords!" },
     { name: "Dawnguard", description: "Vampire hunters with very large crossbows." },
-    { name: "Volkihar Vampires", description: "Embrace the night. Become the monster." },
+    { name: "Volkihar Vampires", description: "Embrace the night. Become the monster.", daedric: true },
     { name: "Bards College", description: "Poems, drums, flutes — and the occasional tomb raid." },
     { name: "None", description: "A lone wanderer. Factions are for people with friends." },
   ],
@@ -162,10 +157,10 @@ const BUILD_DATA = {
     { name: "Zenithar", description: "God of work and commerce." },
     { name: "Julianos", description: "God of wisdom and logic." },
     { name: "Arkay", description: "God of the cycle of life and death." },
-    { name: "Nocturnal", description: "Daedric Prince of night and luck — patron of thieves." },
-    { name: "Meridia", description: "Daedric Prince of life — sworn enemy of the undead." },
-    { name: "Hircine", description: "Daedric Prince of the Hunt — father of werebeasts." },
-    { name: "Mephala", description: "Daedric Prince of plots, lies, and webs." },
+    { name: "Nocturnal", description: "Daedric Prince of night and luck — patron of thieves.", daedric: true },
+    { name: "Meridia", description: "Daedric Prince of life — sworn enemy of the undead.", daedric: true },
+    { name: "Hircine", description: "Daedric Prince of the Hunt — father of werebeasts.", daedric: true },
+    { name: "Mephala", description: "Daedric Prince of plots, lies, and webs.", daedric: true },
   ],
 
   morality: [
@@ -180,7 +175,8 @@ const BUILD_DATA = {
   // Optional flags: requiresMagic / requiresNoMagic gate the rule on the
   // build's magic schools; incompatibleWeapon keeps contradicting
   // combinations from rolling together (in both directions when the rules
-  // card is locked).
+  // card is locked); noDaedra keeps the rule away from builds with a
+  // daedric deity, affliction, or faction (entries flagged `daedric`).
   roleplayRules: [
     { name: "Wanderlust", description: "Fast travel is for cowards — walk, ride, or take the carriage everywhere." },
     { name: "Creature of Habit", description: "Find a bed before midnight, every single night." },
@@ -204,6 +200,7 @@ const BUILD_DATA = {
     { name: "Heart of Iron", description: "If it's metal, it must be iron — weapons and armor of iron (or hide and leather) only." },
     { name: "Sentimental Value", description: "Never sell anything — your coin comes from quest rewards and what you find." },
     { name: "Lone Wolf", description: "No followers, no companions, no pets. You walk alone." },
+    { name: "Vigilant of Stendarr", description: "Daedra are abominations — never use, carry, or craft Daedric weapons, armor, or artifacts, and destroy them where you find them.", noDaedra: true },
   ],
 
   // Rules in the same group contradict each other and never roll together.
@@ -217,9 +214,9 @@ const BUILD_DATA = {
   // (in both directions when either card is locked).
   affliction: [
     { name: "None", description: "A pure mortal. Sleep at night, walk in the sun, keep your soul." },
-    { name: "Werewolf", description: "The blood of Hircine runs in your veins. Beast Form when the hunt calls.", incompatibleFactions: ["Volkihar Vampires"] },
-    { name: "Vampire", description: "A creature of the night. Feed regularly — or stop pretending to be one of them.", incompatibleFactions: ["Dawnguard", "The Companions"] },
-    { name: "Vampire Lord", description: "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard).", incompatibleFactions: ["Dawnguard", "The Companions"] },
+    { name: "Werewolf", description: "The blood of Hircine runs in your veins. Beast Form when the hunt calls.", incompatibleFactions: ["Volkihar Vampires"], daedric: true },
+    { name: "Vampire", description: "A creature of the night. Feed regularly — or stop pretending to be one of them.", incompatibleFactions: ["Dawnguard", "The Companions"], daedric: true },
+    { name: "Vampire Lord", description: "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard).", incompatibleFactions: ["Dawnguard", "The Companions"], daedric: true },
   ],
 
   // Sentence templates for the character backstory. Placeholders are filled

@@ -158,6 +158,40 @@ h1, h2 {
   color: var(--steel-bright);
 }
 
+.dragonborn-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: "Cinzel", serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.85rem 1.4rem;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.dragonborn-toggle:hover {
+  border-color: var(--steel);
+  color: var(--steel-bright);
+}
+
+.dragonborn-toggle input {
+  accent-color: var(--steel);
+  width: 1.05rem;
+  height: 1.05rem;
+  cursor: pointer;
+}
+
+.dragonborn-toggle:has(input:checked) {
+  border-color: var(--steel);
+  color: var(--steel-bright);
+  box-shadow: 0 0 18px rgba(235, 235, 245, 0.15);
+}
+
 /* ---------- Layout ---------- */
 
 main {
@@ -352,8 +386,27 @@ main {
 }
 
 .modal-option {
-  padding: 0.55rem 0;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
   border-bottom: 1px solid var(--border);
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.55rem 0.5rem;
+  transition: background 0.15s ease;
+}
+
+.modal-option:hover {
+  background: rgba(235, 235, 245, 0.07);
+}
+
+.modal-option.current {
+  background: rgba(235, 235, 245, 0.05);
+  border-left: 2px solid var(--steel);
 }
 
 .modal-option:last-child {
