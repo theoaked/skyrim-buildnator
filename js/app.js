@@ -460,6 +460,41 @@ function chooseMagicSchool(option) {
   setItems("magicSchools", [option].concat(others.slice(0, 1)));
 }
 
+// Unchecking: remove the item, then refill the card up to its mandatory
+// minimum (excluding the removed item, so it doesn't bounce right back).
+function removeSkill(name) {
+  const picked = state.skills.items.filter((s) => s.name !== name);
+  for (const candidate of sample(BUILD_DATA.skills, BUILD_DATA.skills.length)) {
+    if (picked.length === MIN_PICKS.skills) break;
+    if (candidate.name === name) continue;
+    if (picked.some((p) => p.name === candidate.name || skillsConflict(p.name, candidate.name))) continue;
+    picked.push(candidate);
+  }
+  setItems("skills", picked);
+}
+
+function removeMagicSchool(name) {
+  const kept = state.magicSchools.items.filter((i) => i.name !== name && i.name !== "None");
+  setItems("magicSchools", kept.length ? kept : [NONE_ENTRY]);
+}
+
+function removeRule(name) {
+  const picked = state.roleplayRules.items.filter((r) => r.name !== name);
+  const hasMagic = currentMagicSchools().length > 0;
+  const weaponName = state.weapon.items[0].name;
+  for (const candidate of sample(BUILD_DATA.roleplayRules, BUILD_DATA.roleplayRules.length)) {
+    if (picked.length === MIN_PICKS.roleplayRules) break;
+    if (candidate.name === name) continue;
+    if (picked.some((p) => p.name === candidate.name || rulesConflict(p.name, candidate.name))) continue;
+    if (candidate.requiresMagic && (!hasMagic || picked.some((p) => p.requiresNoMagic))) continue;
+    if (candidate.requiresNoMagic && (hasMagic || picked.some((p) => p.requiresMagic))) continue;
+    if (candidate.incompatibleWeapon === weaponName) continue;
+    if (candidate.noDaedra && buildHasDaedra()) continue;
+    picked.push(candidate);
+  }
+  setItems("roleplayRules", picked);
+}
+
 // The chosen rule joins the set; current rules that don't contradict it are
 // kept, then the set is refilled to 4 with rules that fit the current build.
 function chooseRule(option) {
@@ -521,27 +556,53 @@ function reconcile(chosenId) {
 
 function applyChoice(cat, option) {
   const before = state[cat.id].items.map((i) => i.name);
-  if (cat.id === "skills") chooseSkill(option);
-  else if (cat.id === "magicSchools") chooseMagicSchool(option);
-  else if (cat.id === "roleplayRules") chooseRule(option);
-  else setItems(cat.id, [option]);
-  // Choosing "Shouts First" makes the character Dragonborn — the Voice
-  // demands it.
-  if (cat.id === "combatStyle" && option.requires && option.requires.dragonborn) {
-    isDragonborn = true;
-    document.getElementById("dragonborn-toggle").checked = true;
+  const isCurrent = before.includes(option.name);
+  const max = MAX_PICKS[cat.id] || 1;
+
+  if (isCurrent) {
+    // Clicking a highlighted option unchecks it — but never below the
+    // card's mandatory minimum.
+    if (max === 1) {
+      openOptionsModal(cat, "This card always needs one option — pick a different one to replace it.");
+      return;
+    }
+    if (option.name === "None") {
+      openOptionsModal(cat, "Nothing to remove — pick a school to add it.");
+      return;
+    }
+    if (cat.id === "skills") removeSkill(option.name);
+    else if (cat.id === "magicSchools") removeMagicSchool(option.name);
+    else removeRule(option.name);
+  } else {
+    if (cat.id === "skills") chooseSkill(option);
+    else if (cat.id === "magicSchools") chooseMagicSchool(option);
+    else if (cat.id === "roleplayRules") chooseRule(option);
+    else setItems(cat.id, [option]);
+    // Choosing "Shouts First" makes the character Dragonborn — the Voice
+    // demands it.
+    if (cat.id === "combatStyle" && option.requires && option.requires.dragonborn) {
+      isDragonborn = true;
+      document.getElementById("dragonborn-toggle").checked = true;
+    }
   }
+
   reconcile(cat.id);
   narrativeText = buildNarrative();
   render();
-  // The modal stays open so more options can be picked; warn when the pick
-  // went past the card's capacity and pushed something out.
+  // The modal stays open so more options can be picked; the hint explains
+  // what a pick pushed out or what an uncheck pulled in.
   const after = state[cat.id].items.map((i) => i.name);
-  const dropped = before.filter((n) => !after.includes(n));
-  const max = MAX_PICKS[cat.id] || 1;
   let notice = "";
-  if (max > 1 && option.name !== "None" && dropped.length && !before.includes(option.name)) {
-    notice = "Only " + max + " fit on this card — replaced " + dropped.join(", ") + ".";
+  if (isCurrent) {
+    const added = after.filter((n) => !before.includes(n));
+    notice = "Removed " + option.name + (added.length
+      ? " — this card always carries " + MIN_PICKS[cat.id] + ", so " + added.join(", ") + " took its place."
+      : ".");
+  } else {
+    const dropped = before.filter((n) => !after.includes(n));
+    if (max > 1 && option.name !== "None" && dropped.length) {
+      notice = "Only " + max + " fit on this card — replaced " + dropped.join(", ") + ".";
+    }
   }
   openOptionsModal(cat, notice);
 }
@@ -571,26 +632,36 @@ function optionsFor(catId) {
   return BUILD_DATA[catId];
 }
 
-// How many options a card can hold at once; picking more replaces the oldest.
+// How many options a card can hold at once; picking more replaces the
+// oldest. MIN_PICKS is the mandatory floor: unchecking below it refills the
+// card automatically (and single-option cards can never be emptied).
 const MAX_PICKS = { skills: 3, magicSchools: 2, roleplayRules: 4 };
+const MIN_PICKS = { skills: 3, magicSchools: 0, roleplayRules: 4 };
+
+function modalHintFor(catId) {
+  const max = MAX_PICKS[catId] || 1;
+  if (max === 1) return "Click an option to use it.";
+  const min = MIN_PICKS[catId];
+  const capacity = min === max ? "exactly " + max : min + " to " + max;
+  return "Click options to add them, or click a highlighted one to remove it — this card carries " + capacity + ".";
+}
 
 function openOptionsModal(cat, notice) {
   const max = MAX_PICKS[cat.id] || 1;
   document.getElementById("modal-title").textContent =
     cat.label + (max > 1 ? " — choose up to " + max : " — choose one");
   const hint = document.getElementById("modal-hint");
-  hint.textContent = notice || (max > 1
-    ? "Click options to add them — this card holds at most " + max + "; picking more replaces the oldest."
-    : "Click an option to use it.");
+  hint.textContent = notice || modalHintFor(cat.id);
   hint.className = "modal-hint" + (notice ? " modal-hint-warning" : "");
   const body = document.getElementById("modal-body");
   body.innerHTML = "";
   const currentNames = state[cat.id].items.map((i) => i.name);
   for (const option of optionsFor(cat.id)) {
+    const isCurrent = currentNames.includes(option.name);
     const row = document.createElement("button");
-    row.className = "modal-option" + (currentNames.includes(option.name) ? " current" : "");
+    row.className = "modal-option" + (isCurrent ? " current" : "");
     row.setAttribute("type", "button");
-    row.title = "Use " + option.name;
+    row.title = isCurrent && max > 1 ? "Remove " + option.name : "Use " + option.name;
     row.addEventListener("click", () => applyChoice(cat, option));
     const name = document.createElement("p");
     name.className = "card-value";
