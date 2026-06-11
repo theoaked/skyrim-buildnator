@@ -5,7 +5,8 @@
 const CATEGORIES = [
   { id: "character", label: "Character" },
   { id: "race", label: "Race", pool: BUILD_DATA.race, count: 1 },
-  { id: "archetype", label: "Archetype", pool: BUILD_DATA.archetype, count: 1 },
+  { id: "archetype", label: "Archetype" },
+  { id: "dragonborn", label: "Dragonborn" },
   { id: "skills", label: "Primary Skills" },
   { id: "standingStone", label: "Standing Stone", pool: BUILD_DATA.standingStone, count: 1 },
   { id: "combatStyle", label: "Combat Style" },
@@ -56,6 +57,11 @@ function lockedStyleRequires() {
   return state.combatStyle.items[0].requires || {};
 }
 
+function lockedArchetypeRequires() {
+  if (!isLocked("archetype")) return {};
+  return state.archetype.items[0].requires || {};
+}
+
 function lockedArmorRequires() {
   if (!isLocked("armor")) return {};
   return state.armor.items[0].requires || {};
@@ -88,6 +94,9 @@ function rollWeapon() {
   const req = lockedStyleRequires();
   if (req.weaponName) pool = pool.filter((w) => w.name === req.weaponName);
   if (req.weaponSkill) pool = pool.filter((w) => w.skill === req.weaponSkill);
+  const archReq = lockedArchetypeRequires();
+  if (archReq.weaponName) pool = pool.filter((w) => w.name === archReq.weaponName);
+  if (archReq.weaponSkillIn) pool = pool.filter((w) => archReq.weaponSkillIn.includes(w.skill));
   const armorReq = lockedArmorRequires();
   if (armorReq.weaponSkillNot) pool = pool.filter((w) => !armorReq.weaponSkillNot.includes(w.skill));
   const ruleWeapons = lockedRuleFlags().incompatibleWeapons;
@@ -99,15 +108,22 @@ function skillsConflict(a, b) {
   return BUILD_DATA.skillConflicts.some((group) => group.includes(a) && group.includes(b));
 }
 
-// Skills roll. The current weapon's governing skill and a locked combat
-// style's required skill are always included, and skills from the same
-// conflict group never roll together.
+// Skills roll. The current weapon's governing skill, a locked combat style's
+// required skill, and one of a locked archetype's skillIn are always
+// included; skills from the same conflict group never roll together.
 function rollSkills() {
   const requiredNames = [];
   const weaponSkill = state.weapon && state.weapon.items[0].skill;
   if (weaponSkill) requiredNames.push(weaponSkill);
   const styleSkill = lockedStyleRequires().skill;
   if (styleSkill && !requiredNames.includes(styleSkill)) requiredNames.push(styleSkill);
+  const archSkillIn = lockedArchetypeRequires().skillIn;
+  if (archSkillIn && !requiredNames.some((n) => archSkillIn.includes(n))) {
+    const options = archSkillIn.filter(
+      (n) => !requiredNames.some((rn) => rn === n || skillsConflict(rn, n))
+    );
+    if (options.length) requiredNames.push(pick(options));
+  }
   const excluded = lockedStyleRequires().excludeSkills || [];
   const picked = requiredNames.map((n) => BUILD_DATA.skills.find((s) => s.name === n));
   for (const candidate of sample(BUILD_DATA.skills, BUILD_DATA.skills.length)) {
@@ -119,10 +135,9 @@ function rollSkills() {
   setItems("skills", picked);
 }
 
-// Magic schools roll (0-2 schools). A locked combat style can force a
-// specific school in, or at least one school for anyMagic styles; locked
-// Mage Robes and magic-bound rules also demand one, while a locked
-// magic-averse rule (Agnostic) forces zero.
+// Magic schools roll (0-2 schools). Locked cards can force specific schools
+// in (combat style, archetype), demand at least one (anyMagic styles, Mage
+// Robes, magic-bound rules and archetypes), or force zero (Agnostic rule).
 function rollMagicSchools() {
   const ruleFlags = lockedRuleFlags();
   if (ruleFlags.requiresNoMagic) {
@@ -130,37 +145,68 @@ function rollMagicSchools() {
     return;
   }
   const req = lockedStyleRequires();
-  const mustHave = req.magicSchool
-    ? [BUILD_DATA.magicSchools.find((s) => s.name === req.magicSchool)]
-    : [];
+  const archReq = lockedArchetypeRequires();
+  const mustNames = [];
+  if (req.magicSchool) mustNames.push(req.magicSchool);
+  if (archReq.magicSchool && !mustNames.includes(archReq.magicSchool)) mustNames.push(archReq.magicSchool);
+  if (archReq.magicSchoolIn && !mustNames.some((n) => archReq.magicSchoolIn.includes(n))) {
+    mustNames.push(pick(archReq.magicSchoolIn));
+  }
+  const mustHave = mustNames.map((n) => BUILD_DATA.magicSchools.find((s) => s.name === n));
   let n = Math.floor(Math.random() * 3);
-  if ((req.anyMagic || lockedArmorRequires().anyMagic || ruleFlags.requiresMagic || mustHave.length) && n === 0) n = 1;
+  const needAny = req.anyMagic || archReq.anyMagic || lockedArmorRequires().anyMagic || ruleFlags.requiresMagic;
+  if ((needAny || mustHave.length) && n === 0) n = 1;
+  if (n < mustHave.length) n = mustHave.length;
   const rest = sample(
-    BUILD_DATA.magicSchools.filter((s) => !mustHave.some((m) => m.name === s.name)),
+    BUILD_DATA.magicSchools.filter((s) => !mustNames.includes(s.name)),
     Math.max(0, n - mustHave.length)
   );
   const items = mustHave.concat(rest);
   setItems("magicSchools", items.length ? items : [NONE_ENTRY]);
 }
 
-// A style fits when every requirement it declares holds for the current build.
-function styleFits(style) {
-  const r = style.requires || {};
+// Shared requirement check: an entry fits when every requirement it declares
+// holds for the current build. Plain fields are exact; *In fields mean "at
+// least one of".
+function fitsBuild(entry) {
+  const r = entry.requires;
+  if (!r) return true;
   const weapon = state.weapon.items[0];
+  const sk = currentSkillNames();
+  const schools = currentMagicSchools();
   if (r.weaponName && weapon.name !== r.weaponName) return false;
   if (r.weaponSkill && weapon.skill !== r.weaponSkill) return false;
-  if (r.skill && !currentSkillNames().includes(r.skill)) return false;
-  if (r.excludeSkills && currentSkillNames().some((s) => r.excludeSkills.includes(s))) return false;
-  const schools = currentMagicSchools();
+  if (r.weaponSkillIn && !r.weaponSkillIn.includes(weapon.skill)) return false;
+  if (r.skill && !sk.includes(r.skill)) return false;
+  if (r.skillIn && !sk.some((s) => r.skillIn.includes(s))) return false;
+  if (r.excludeSkills && sk.some((s) => r.excludeSkills.includes(s))) return false;
   if (r.magicSchool && !schools.includes(r.magicSchool)) return false;
+  if (r.magicSchoolIn && !schools.some((s) => r.magicSchoolIn.includes(s))) return false;
   if (r.anyMagic && schools.length === 0) return false;
+  if (r.armorIn && !r.armorIn.includes(state.armor.items[0].name)) return false;
+  if (r.dragonborn && state.dragonborn.items[0].name !== "Dragonborn") return false;
   return true;
 }
 
-// Combat style rolls last, from the styles the rest of the build supports.
-// Never empty: "Shouts First" has no requirements.
+// Dragonborn rolls before combat style: a locked "Shouts First" style means
+// the character must be Dragonborn.
+function rollDragonborn() {
+  let pool = BUILD_DATA.dragonborn;
+  if (lockedStyleRequires().dragonborn) pool = pool.filter((d) => d.name === "Dragonborn");
+  setItems("dragonborn", sample(pool, 1));
+}
+
+// Combat style rolls from the styles the rest of the build supports.
+// Never empty: "Opportunist" has no requirements.
 function rollCombatStyle() {
-  setItems("combatStyle", sample(BUILD_DATA.combatStyle.filter(styleFits), 1));
+  setItems("combatStyle", sample(BUILD_DATA.combatStyle.filter(fitsBuild), 1));
+}
+
+// Archetype rolls last, from the archetypes the finished build supports
+// (e.g. Necromancer only for Conjuration casters, Monk only for Fists).
+// Never empty: "Pilgrim" has no requirements.
+function rollArchetype() {
+  setItems("archetype", sample(BUILD_DATA.archetype.filter(fitsBuild), 1));
 }
 
 // Armor rolls after weapon and magic schools: Mage Robes (and any future
@@ -173,7 +219,10 @@ function armorFits(entry) {
 }
 
 function rollArmor() {
-  setItems("armor", sample(BUILD_DATA.armor.filter(armorFits), 1));
+  let pool = BUILD_DATA.armor.filter(armorFits);
+  const archArmorIn = lockedArchetypeRequires().armorIn;
+  if (archArmorIn) pool = pool.filter((a) => archArmorIn.includes(a.name));
+  setItems("armor", sample(pool, 1));
 }
 
 // Faction and affliction roll as a coherent pair: a locked affliction keeps
@@ -228,7 +277,7 @@ function rollCharacter() {
 }
 
 // Categories with custom roll logic, handled in dependency order below.
-const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "roleplayRules", "faction", "affliction"];
+const SPECIAL_IDS = ["character", "skills", "weapon", "magicSchools", "armor", "combatStyle", "archetype", "dragonborn", "roleplayRules", "faction", "affliction"];
 
 let narrativeText = "";
 
@@ -268,6 +317,7 @@ function buildNarrative() {
   const sentences = [pick(N.openings), pick(N.paths), pick(N.creeds)];
   const afflictionLine = N.afflictions[state.affliction.items[0].name];
   if (afflictionLine) sentences.push(afflictionLine);
+  if (state.dragonborn.items[0].name === "Dragonborn") sentences.push(pick(N.dragonborn));
   sentences.push(pick(faction === "None" ? N.fatesAlone : N.fates));
 
   return sentences
@@ -279,8 +329,9 @@ function buildNarrative() {
 function generateAll() {
   // Plain categories first (race before character), then the dependent chain:
   // weapon -> skills (must include the weapon's skill) -> magic schools ->
-  // armor and roleplay rules (both magic-aware) -> combat style (picked from
-  // what the build supports) -> character name -> backstory.
+  // armor and roleplay rules (both magic-aware) -> dragonborn -> combat style
+  // and archetype (both picked from what the build supports) -> character
+  // name -> backstory.
   for (const cat of CATEGORIES) {
     if (isLocked(cat.id) || SPECIAL_IDS.includes(cat.id)) continue;
     state[cat.id] = rollCategory(cat);
@@ -292,7 +343,9 @@ function generateAll() {
   if (!isLocked("magicSchools")) rollMagicSchools();
   if (!isLocked("armor")) rollArmor();
   if (!isLocked("roleplayRules")) rollRoleplayRules();
+  if (!isLocked("dragonborn")) rollDragonborn();
   if (!isLocked("combatStyle")) rollCombatStyle();
+  if (!isLocked("archetype")) rollArchetype();
   if (!isLocked("character")) rollCharacter();
   narrativeText = buildNarrative();
   render();
