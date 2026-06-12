@@ -12,8 +12,19 @@ var outPath = args.Length > 0 ? args[0] : "Buildnator.esp";
 var dataJsonPath = args.Length > 1
     ? args[1]
     : Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "generated", "data.json");
+var esmPath = args.Length > 2
+    ? args[2]
+    : @"C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition\Data\Skyrim.esm";
 
 var menus = JsonSerializer.Deserialize<DataFile>(File.ReadAllText(dataJsonPath))!.menus;
+
+// Vanilla forms are resolved from the real Skyrim.esm by EditorID - no
+// memorized FormIDs for keywords/globals.
+var esm = SkyrimMod.CreateFromBinaryOverlay(esmPath, SkyrimRelease.SkyrimSE);
+FormKey KwKey(string edid) =>
+    esm.Keywords.First(k => string.Equals(k.EditorID, edid, StringComparison.OrdinalIgnoreCase)).FormKey;
+FormKey GlobalKey(string edid) =>
+    esm.Globals.First(g => string.Equals(g.EditorID, edid, StringComparison.OrdinalIgnoreCase)).FormKey;
 
 var skyrimEsm = ModKey.FromNameAndExtension("Skyrim.esm");
 FormKey Esm(uint id) => new(skyrimEsm, id);
@@ -135,6 +146,71 @@ var powerEffect = new Effect { Data = new EffectData() };
 powerEffect.BaseEffect.SetTo(mgef.FormKey);
 power.Effects.Add(powerEffect);
 
+// ---- Enforcement: debuff abilities (constant, value-modifier effects) ----
+
+Spell MakeAbility(string edid, string name, string desc, params (ActorValue Av, float Mag)[] effects)
+{
+    var ability = mod.Spells.AddNew(edid);
+    ability.Name = name;
+    ability.Description = desc;
+    ability.Type = SpellType.Ability;
+    ability.CastType = CastType.ConstantEffect;
+    ability.TargetType = TargetType.Self;
+    var n = 0;
+    foreach (var (av, mag) in effects)
+    {
+        var fx = mod.MagicEffects.AddNew($"{edid}Fx{n++}");
+        fx.Name = name;
+        fx.Description = desc;
+        fx.Flags = MagicEffect.Flag.Detrimental | MagicEffect.Flag.Recover | MagicEffect.Flag.Painless
+            | MagicEffect.Flag.NoDeathDispel;
+        fx.CastType = CastType.ConstantEffect;
+        fx.TargetType = TargetType.Self;
+        fx.Archetype = new MagicEffectArchetype { Type = MagicEffectArchetype.TypeEnum.ValueModifier, ActorValue = av };
+        var eff = new Effect { Data = new EffectData { Magnitude = mag } };
+        eff.BaseEffect.SetTo(fx.FormKey);
+        ability.Effects.Add(eff);
+    }
+    return ability;
+}
+
+var abNoMagicka = MakeAbility("BLD_AbNoMagicka", "Born without Magicka",
+    "Your veins carry no magicka of your own.", (ActorValue.Magicka, 1000));
+var abAnemic = MakeAbility("BLD_AbAnemic", "Anemic",
+    "Thin blood, weak heart - your stamina is a flicker.", (ActorValue.Stamina, 90));
+var abNausea = MakeAbility("BLD_AbNausea", "Nausea",
+    "Your stomach rebels against what you swallowed.",
+    (ActorValue.StaminaRateMult, 100), (ActorValue.MagickaRateMult, 50));
+var abGuilt = MakeAbility("BLD_AbGuilt", "Guilty Conscience",
+    "You broke your oath. The weight of it slows your step.",
+    (ActorValue.CarryWeight, 50), (ActorValue.HealRateMult, 25));
+var abExhausted = MakeAbility("BLD_AbExhausted", "Exhausted",
+    "No bed before midnight - your body keeps the score.",
+    (ActorValue.StaminaRateMult, 50), (ActorValue.HealRateMult, 50));
+var abHungry = MakeAbility("BLD_AbHungry", "Hungry",
+    "Too few meals today. Your strength wanes.", (ActorValue.StaminaRateMult, 50));
+var abNightTerror = MakeAbility("BLD_AbNightTerror", "Night Terror",
+    "The dark presses in. You should not be out here.",
+    (ActorValue.SpeedMult, 20), (ActorValue.StaminaRateMult, 50), (ActorValue.CarryWeight, 1));
+var abUnease = MakeAbility("BLD_AbUnease", "Oathbreaker's Unease",
+    "Your company - or the lack of it - violates your oath.", (ActorValue.HealRateMult, 50));
+
+// ---- Enforcement: meat list for Herbivore (from the real esm) ----
+
+var meatWords = new[] { "Beef", "Venison", "Horse", "Pheasant", "Rabbit", "Chicken", "Horker",
+    "Mammoth", "Dog", "Skeever", "Salmon", "Goat", "Mudcrab", "Slaughterfish", "Clam" };
+var meatList = mod.FormLists.AddNew("BLD_MeatList");
+var meatCount = 0;
+foreach (var food in esm.Ingestibles)
+{
+    var ed = food.EditorID ?? "";
+    if (!ed.StartsWith("Food", StringComparison.OrdinalIgnoreCase)) continue;
+    if (!meatWords.Any(w => ed.Contains(w, StringComparison.OrdinalIgnoreCase))) continue;
+    meatList.Items.Add(food.ToLink());
+    meatCount++;
+}
+Console.WriteLine($"Meat list: {meatCount} foods.");
+
 // ---- Quest scripts (VMAD) ----
 
 var adapter = new QuestAdapter();
@@ -171,7 +247,42 @@ adapter.Scripts.Add(mainScript);
 var aliasFragment = new QuestFragmentAlias();
 aliasFragment.Property.Object.SetTo(quest.FormKey);
 aliasFragment.Property.Alias = 0;
-aliasFragment.Scripts.Add(new ScriptEntry { Name = "BLD_Enforcer", Flags = ScriptEntry.Flag.Local });
+var enforcerScript = new ScriptEntry { Name = "BLD_Enforcer", Flags = ScriptEntry.Flag.Local };
+
+void AddEnforcerProp(string name, FormKey target)
+{
+    var prop = new ScriptObjectProperty { Name = name, Flags = ScriptProperty.Flag.Edited };
+    prop.Object.SetTo(target);
+    enforcerScript.Properties.Add(prop);
+}
+
+AddEnforcerProp("AbNoMagicka", abNoMagicka.FormKey);
+AddEnforcerProp("AbAnemic", abAnemic.FormKey);
+AddEnforcerProp("AbNausea", abNausea.FormKey);
+AddEnforcerProp("AbGuilt", abGuilt.FormKey);
+AddEnforcerProp("AbExhausted", abExhausted.FormKey);
+AddEnforcerProp("AbHungry", abHungry.FormKey);
+AddEnforcerProp("AbNightTerror", abNightTerror.FormKey);
+AddEnforcerProp("AbUnease", abUnease.FormKey);
+AddEnforcerProp("MeatList", meatList.FormKey);
+AddEnforcerProp("FollowerCount", GlobalKey("PlayerFollowerCount"));
+AddEnforcerProp("GameHourGlobal", GlobalKey("GameHour"));
+AddEnforcerProp("DaysPassed", GlobalKey("GameDaysPassed"));
+AddEnforcerProp("KwWeapDaedric", KwKey("WeapMaterialDaedric"));
+AddEnforcerProp("KwArmorDaedric", KwKey("ArmorMaterialDaedric"));
+AddEnforcerProp("KwDaedricArtifact", KwKey("VendorItemDaedricArtifact"));
+AddEnforcerProp("KwWeapIron", KwKey("WeapMaterialIron"));
+AddEnforcerProp("KwWeapWood", KwKey("WeapMaterialWood"));
+AddEnforcerProp("KwArmorIron", KwKey("ArmorMaterialIron"));
+AddEnforcerProp("KwArmorIronBanded", KwKey("ArmorMaterialIronBanded"));
+AddEnforcerProp("KwArmorHide", KwKey("ArmorMaterialHide"));
+AddEnforcerProp("KwArmorStudded", KwKey("ArmorMaterialStudded"));
+AddEnforcerProp("KwArmorLeather", KwKey("ArmorMaterialLeather"));
+AddEnforcerProp("KwArmorJewelry", KwKey("ArmorJewelry"));
+AddEnforcerProp("KwArmorClothing", KwKey("ArmorClothing"));
+AddEnforcerProp("KwWeapStaff", KwKey("WeapTypeStaff"));
+
+aliasFragment.Scripts.Add(enforcerScript);
 adapter.Aliases.Add(aliasFragment);
 
 quest.VirtualMachineAdapter = adapter;
@@ -195,7 +306,10 @@ var scriptNames = rereadQuest.VirtualMachineAdapter!.Scripts.Select(s => s.Name)
 if (!scriptNames.Contains("BLD_Main")) throw new Exception("Round-trip: BLD_Main script missing on quest");
 var propCount = rereadQuest.VirtualMachineAdapter!.Scripts.First(s => s.Name == "BLD_Main").Properties.Count;
 if (propCount != specs.Length + 6) throw new Exception($"Round-trip: expected {specs.Length + 6} props, got {propCount}");
-Console.WriteLine($"Round-trip OK ({propCount} quest script properties).");
+var enforcerProps = rereadQuest.VirtualMachineAdapter!.Aliases
+    .First().Scripts.First(s => s.Name == "BLD_Enforcer").Properties.Count;
+if (enforcerProps != 25) throw new Exception($"Round-trip: expected 25 enforcer props, got {enforcerProps}");
+Console.WriteLine($"Round-trip OK ({propCount} quest + {enforcerProps} enforcer script properties).");
 
 // ---- SEQ file: required for Start Game Enabled quests to fire on new game ----
 var masterCount = reread.ModHeader.MasterReferences.Count;

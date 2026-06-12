@@ -27,14 +27,16 @@ if (Test-Path $genData) {
 # --- 2. Build Buildnator.esp with the Mutagen generator ---
 Write-Host "== esp generator ==" -ForegroundColor Cyan
 $esp = Join-Path $outDir "Buildnator.esp"
-dotnet run --project (Join-Path $modRoot "Generator") -c Release -- $esp (Join-Path $modRoot "generated\data.json")
+dotnet run --project (Join-Path $modRoot "Generator") -c Release -- $esp (Join-Path $modRoot "generated\data.json") (Join-Path $gameDir "Data\Skyrim.esm")
 if ($LASTEXITCODE -ne 0) { throw "esp generator failed" }
 
 # --- 3. Compile Papyrus scripts ---
 Write-Host "== papyrus compile ==" -ForegroundColor Cyan
 $compiler = Join-Path $gameDir "Papyrus Compiler\PapyrusCompiler.exe"
 $gameSources = Join-Path $gameDir "Data\Source\Scripts"
-$imports = "$(Join-Path $modRoot 'Source\Scripts');$(Join-Path $modRoot 'generated');$gameSources"
+# Source\Imports holds compile-time-only declarations (SKSE natives) - they are
+# imported but never compiled to pex, so SKSE's own runtime scripts stay intact.
+$imports = "$(Join-Path $modRoot 'Source\Imports');$(Join-Path $modRoot 'Source\Scripts');$(Join-Path $modRoot 'generated');$gameSources"
 
 $sources = @(Get-ChildItem (Join-Path $modRoot "Source\Scripts") -Filter *.psc)
 $sources += @(Get-ChildItem (Join-Path $modRoot "generated") -Filter *.psc -ErrorAction SilentlyContinue)
