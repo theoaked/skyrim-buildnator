@@ -25,6 +25,8 @@ FormKey KwKey(string edid) =>
     esm.Keywords.First(k => string.Equals(k.EditorID, edid, StringComparison.OrdinalIgnoreCase)).FormKey;
 FormKey GlobalKey(string edid) =>
     esm.Globals.First(g => string.Equals(g.EditorID, edid, StringComparison.OrdinalIgnoreCase)).FormKey;
+FormKey StatKey(string edid) =>
+    esm.Statics.First(s => string.Equals(s.EditorID, edid, StringComparison.OrdinalIgnoreCase)).FormKey;
 
 var skyrimEsm = ModKey.FromNameAndExtension("Skyrim.esm");
 FormKey Esm(uint id) => new(skyrimEsm, id);
@@ -36,7 +38,9 @@ mod.IsSmallMaster = true;
 mod.ModHeader.Author = "Buildnator";
 mod.ModHeader.Description = "Skyrim Buildnator - random character builds, rolled and enforced in-game.";
 
-const int PageSize = 7;
+// 4 options + up to 3 nav buttons = 7 buttons max: vanilla message boxes lay
+// buttons out horizontally, and more than that overflows the screen width.
+const int PageSize = 4;
 
 Message MakeMessage(string edid, string desc, IEnumerable<string> buttons)
 {
@@ -77,7 +81,7 @@ foreach (var spec in specs)
     {
         var chunk = options.Skip(p * PageSize).Take(PageSize).ToList();
         var buttons = new List<string>(chunk);
-        if (pageCount > 1) buttons.Add("- More choices -");
+        if (pageCount > 1) buttons.Add("- More -");
         buttons.Add("- Roll the dice -");
         if (spec.HasDone) buttons.Add("- Done -");
         var pageNote = pageCount > 1 ? $" ({p + 1}/{pageCount})" : "";
@@ -100,12 +104,15 @@ var msgGender = MakeMessage("BLD_MsgGender",
     "What body will you wear?",
     new[] { "Male", "Female", "Let fate decide" });
 
+// The build sheet is dynamic text: an XMarker ref renamed via SKSE
+// SetDisplayName fills the quest's "Summary" alias, and these messages
+// inline it through <Alias=Summary> text replacement (owner quest below).
 var msgConfirm = MakeMessage("BLD_MsgConfirm",
-    "Stand by this destiny?",
+    "<Alias=Summary>\n\nStand by this destiny?",
     new[] { "Accept this destiny", "Roll again", "Customize it", "Not now" });
 
 var msgPostApply = MakeMessage("BLD_MsgPostApply",
-    "That was your build sheet. Your destiny is sealed and applied.",
+    "<Alias=Summary>",
     new[] { "Close", "Roll a new destiny" });
 
 // ---- Quest (created before the power's effect so its script can link back) ----
@@ -118,6 +125,15 @@ quest.Priority = 60;
 var playerAlias = new QuestAlias { ID = 0, Name = "BLD_PlayerAlias" };
 playerAlias.ForcedReference.SetTo(playerRef);
 quest.Aliases.Add(playerAlias);
+
+// Filled at runtime (ForceRefTo) with the renamed marker carrying the
+// build sheet text; StoresText enables <Alias=Summary> replacement.
+var summaryAlias = new QuestAlias { ID = 1, Name = "Summary" };
+summaryAlias.Flags = QuestAlias.Flag.Optional | QuestAlias.Flag.StoresText;
+quest.Aliases.Add(summaryAlias);
+
+msgConfirm.Quest.SetTo(quest.FormKey);
+msgPostApply.Quest.SetTo(quest.FormKey);
 
 // ---- Lesser power: reopens the wizard / applies the build ----
 
@@ -241,6 +257,7 @@ AddObjectProp("MsgGender", msgGender.FormKey);
 AddObjectProp("MsgConfirm", msgConfirm.FormKey);
 AddObjectProp("MsgPostApply", msgPostApply.FormKey);
 AddObjectProp("PowerSpell", power.FormKey);
+AddObjectProp("MarkerBase", StatKey("XMarker"));
 
 adapter.Scripts.Add(mainScript);
 
@@ -305,7 +322,7 @@ var rereadQuest = reread.Quests.First();
 var scriptNames = rereadQuest.VirtualMachineAdapter!.Scripts.Select(s => s.Name).ToList();
 if (!scriptNames.Contains("BLD_Main")) throw new Exception("Round-trip: BLD_Main script missing on quest");
 var propCount = rereadQuest.VirtualMachineAdapter!.Scripts.First(s => s.Name == "BLD_Main").Properties.Count;
-if (propCount != specs.Length + 6) throw new Exception($"Round-trip: expected {specs.Length + 6} props, got {propCount}");
+if (propCount != specs.Length + 7) throw new Exception($"Round-trip: expected {specs.Length + 7} props, got {propCount}");
 var enforcerProps = rereadQuest.VirtualMachineAdapter!.Aliases
     .First().Scripts.First(s => s.Name == "BLD_Enforcer").Properties.Count;
 if (enforcerProps != 25) throw new Exception($"Round-trip: expected 25 enforcer props, got {enforcerProps}");

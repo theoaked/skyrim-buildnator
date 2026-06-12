@@ -26,6 +26,7 @@ Message Property MsgConfirm Auto
 Message Property MsgPostApply Auto
 
 Spell Property PowerSpell Auto
+Static Property MarkerBase Auto  ; XMarker - carries the build sheet text for <Alias=Summary>
 
 ; ---- the build ----
 String RaceName
@@ -48,6 +49,9 @@ Bool IsDragonborn
 Bool BuildAccepted
 Bool BuildApplied
 
+ObjectReference SummaryMarker
+Int LastMenuPage
+
 Event OnInit()
     Game.GetPlayer().AddSpell(PowerSpell, False)
     Utility.Wait(4.0)
@@ -61,7 +65,7 @@ Function OnPowerUsed()
     ElseIf !BuildApplied
         ApplyBuild()
     Else
-        ShowBlocking(BuildSummary())
+        UpdateSummaryAlias()
         If MsgPostApply.Show() == 1
             BuildAccepted = False
             BuildApplied = False
@@ -83,39 +87,59 @@ Function ShowBlocking(String text)
     Utility.Wait(0.1)
 EndFunction
 
-; Generic paginated chooser. Page layout (generated): up to 7 options,
-; then "- More choices -" (only when multipage), "- Roll the dice -",
+; Feeds the quest's "Summary" alias for <Alias=Summary> text replacement:
+; an invisible XMarker is renamed (SKSE) to the current build sheet.
+Function UpdateSummaryAlias()
+    If SummaryMarker == None
+        SummaryMarker = Game.GetPlayer().PlaceAtMe(MarkerBase, 1, False, True)
+    EndIf
+    SummaryMarker.SetDisplayName(BuildSummary(), True)
+    (GetAlias(1) as ReferenceAlias).ForceRefTo(SummaryMarker)
+EndFunction
+
+; Generic paginated chooser. Page layout (generated): up to 4 options,
+; then "- More -" (only when multipage), "- Roll the dice -",
 ; and "- Done -" (only for multi-pick menus).
 ; Returns the option index, -1 for Roll, -2 for Done.
-Int Function ShowMenu(Message[] pages, Int total, Bool hasDone)
-    Int page = 0
-    Int pageCount = (total + 6) / 7
+; LastMenuPage keeps the page the player was on, so multi-pick menus can
+; reopen where they left off instead of resetting to page 1.
+Int Function ShowMenu(Message[] pages, Int total, Bool hasDone, Int startPage = 0)
+    Int pageCount = (total + 3) / 4
+    Int page = startPage
+    If page < 0 || page >= pageCount
+        page = 0
+    EndIf
     While True
-        Int k = total - page * 7
-        If k > 7
-            k = 7
+        Int k = total - page * 4
+        If k > 4
+            k = 4
         EndIf
+        LastMenuPage = page
         Int choice = pages[page].Show()
-        If choice < k
-            Return page * 7 + choice
-        EndIf
-        Int nav = choice - k
-        If pageCount > 1
-            If nav == 0
-                page += 1
-                If page == pageCount
-                    page = 0
-                EndIf
-            ElseIf nav == 1
-                Return -1
-            Else
-                Return -2
-            EndIf
+        If choice < 0
+            ; another menu still had focus - let it close and try again
+            Utility.Wait(0.5)
+        ElseIf choice < k
+            Return page * 4 + choice
         Else
-            If nav == 0
-                Return -1
+            Int nav = choice - k
+            If pageCount > 1
+                If nav == 0
+                    page += 1
+                    If page == pageCount
+                        page = 0
+                    EndIf
+                ElseIf nav == 1
+                    Return -1
+                Else
+                    Return -2
+                EndIf
             Else
-                Return -2
+                If nav == 0
+                    Return -1
+                Else
+                    Return -2
+                EndIf
             EndIf
         EndIf
     EndWhile
@@ -142,7 +166,7 @@ EndFunction
 Function ConfirmLoop()
     Bool deciding = True
     While deciding
-        ShowBlocking(BuildSummary())
+        UpdateSummaryAlias()
         Int c = MsgConfirm.Show()
         If c == 0
             BuildAccepted = True
@@ -309,8 +333,10 @@ Function ChooseSkills()
         ShowBlocking("Your " + WeaponName + " demands " + WeaponSkill + " - it claims the first of your three skill slots.")
     EndIf
     String[] pool = BLD_Data.SkillNames()
+    Int page = 0
     While n < 3
-        Int i = ShowMenu(MenuSkills, pool.Length, False)
+        Int i = ShowMenu(MenuSkills, pool.Length, False, page)
+        page = LastMenuPage
         If i < 0
             Skills = BLD_Roller.FillSkills(Skills)
             n = 3
@@ -327,8 +353,10 @@ Function ChooseSchools()
     Schools = new String[2]
     String[] pool = BLD_Data.SchoolNames()
     Bool needMagic = BLD_Roller.AnyMagicSkill(Skills)
+    Int page = 0
     While True
-        Int i = ShowMenu(MenuSchools, pool.Length, True)
+        Int i = ShowMenu(MenuSchools, pool.Length, True, page)
+        page = LastMenuPage
         If i == -1
             Schools = BLD_Roller.RollSchools(Skills)
             Return
@@ -373,8 +401,10 @@ EndFunction
 Function ChooseRules()
     Rules = new String[8]
     String[] pool = BLD_Data.RuleNames()
+    Int page = 0
     While True
-        Int i = ShowMenu(MenuRules, pool.Length, True)
+        Int i = ShowMenu(MenuRules, pool.Length, True, page)
+        page = LastMenuPage
         If i == -1
             Rules = BLD_Roller.FillRules(Rules, 4, HasMagic(), WeaponName, HasDaedra(), DeityName, FactionName)
             ShowBlocking("The dice spoke. Your oath now:\n" + RulesText() + "\n\nAdd or remove rules, or press Done.")
@@ -390,20 +420,49 @@ Function ChooseRules()
             ShowBlocking("Removed " + pool[i] + ". Your oath now:\n" + RulesText())
         ElseIf BLD_Roller.CountFilled(Rules) == 8
             ShowBlocking("Your oath is full (8 rules) - remove one first by picking it again.")
-        ElseIf !RuleAllowed(i)
-            ShowBlocking(pool[i] + " doesn't fit this build or contradicts a rule you already swore.")
         Else
-            Rules[BLD_Roller.CountFilled(Rules)] = pool[i]
-            ShowBlocking("Sworn. Your oath now:\n" + RulesText() + "\n\nAdd more, or press Done (3 to 8 rules).")
+            String why = RuleBlockReason(i)
+            If why != ""
+                ShowBlocking(why)
+            Else
+                Rules[BLD_Roller.CountFilled(Rules)] = pool[i]
+                ShowBlocking("Sworn. Your oath now:\n" + RulesText() + "\n\nAdd more, or press Done (3 to 8 rules).")
+            EndIf
         EndIf
     EndWhile
 EndFunction
 
-Bool Function RuleAllowed(Int idx)
-    If !BLD_Roller.RuleFits(idx, HasMagic(), WeaponName, HasDaedra(), DeityName, FactionName)
-        Return False
+; Mirrors BLD_Roller.RuleFits + CanAddRule, but names the failing check so a
+; rejection explains itself. Returns "" when the rule is allowed.
+String Function RuleBlockReason(Int idx)
+    String name = BLD_Data.RuleNames()[idx]
+    Debug.Trace("[Buildnator] rule check " + idx + " '" + name + "' magic=" + HasMagic() + " daedra=" + HasDaedra() + " weapon=" + WeaponName + " deity=" + DeityName + " faction=" + FactionName + " oath=" + Rules)
+    If BLD_Data.RuleRequiresMagic()[idx] && !HasMagic()
+        Return name + " only makes sense for a caster - your build has no magic school."
     EndIf
-    Return BLD_Roller.CanAddRule(Rules, BLD_Data.RuleNames()[idx])
+    If BLD_Data.RuleRequiresNoMagic()[idx] && HasMagic()
+        Return name + " forswears magic - but your build has a magic school."
+    EndIf
+    If BLD_Data.RuleIncompatWeapon()[idx] == WeaponName && WeaponName != ""
+        Return name + " doesn't work with your weapon of choice (" + WeaponName + ")."
+    EndIf
+    If BLD_Data.RuleNoDaedra()[idx] && HasDaedra()
+        Return name + " clashes with the Daedric ties of your build (deity, affliction or faction)."
+    EndIf
+    If BLD_Data.InList(DeityName, BLD_Data.RuleIncompatDeities()[idx])
+        Return name + " clashes with your deity, " + DeityName + "."
+    EndIf
+    If BLD_Data.InList(FactionName, BLD_Data.RuleIncompatFactions()[idx])
+        Return name + " clashes with your faction, the " + FactionName + "."
+    EndIf
+    Int i = 0
+    While i < Rules.Length
+        If Rules[i] != "" && BLD_Roller.RulesConflict(Rules[i], name)
+            Return name + " contradicts " + Rules[i] + " - they cannot share an oath."
+        EndIf
+        i += 1
+    EndWhile
+    Return ""
 EndFunction
 
 Function RemoveRule(String name)
@@ -424,8 +483,10 @@ EndFunction
 
 Function ChooseStyle()
     String[] pool = BLD_Data.StyleNames()
+    Int page = 0
     While True
-        Int i = ShowMenu(MenuStyle, pool.Length, False)
+        Int i = ShowMenu(MenuStyle, pool.Length, False, page)
+        page = LastMenuPage
         If i < 0
             StyleName = BLD_Roller.RollStyle(WeaponName, WeaponSkill, Skills, Schools, IsDragonborn)
             Return
@@ -440,8 +501,10 @@ EndFunction
 
 Function ChooseArchetype()
     String[] pool = BLD_Data.ArchNames()
+    Int page = 0
     While True
-        Int i = ShowMenu(MenuArch, pool.Length, False)
+        Int i = ShowMenu(MenuArch, pool.Length, False, page)
+        page = LastMenuPage
         If i < 0
             ArchName = BLD_Roller.RollArchetype(WeaponName, WeaponSkill, Skills, Schools, ArmorName)
             Return
