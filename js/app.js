@@ -28,6 +28,11 @@ const state = {};
 // rolled card. It gates the "Shouts First" combat style.
 let isDragonborn = false;
 
+// Optional player overrides for the character card (set via the ✏️ editor).
+// null means "leave it to the Divines": roll a random name / sex.
+let customName = null;    // user-typed name; null = roll from the race pool
+let customGender = null;  // "Male" | "Female"; null = random
+
 function sample(pool, n) {
   const copy = pool.slice();
   for (let i = copy.length - 1; i > 0; i--) {
@@ -315,12 +320,17 @@ function rollRoleplayRules() {
   setItems("roleplayRules", picked);
 }
 
-// Name + gender, drawn from the current race's name pool.
+// Name + gender, drawn from the current race's name pool — unless the player
+// pinned a custom name or sex through the ✏️ editor, which take precedence and
+// so survive Generate and race rerolls.
 function rollCharacter() {
   const race = state.race.items[0].name;
-  const gender = Math.random() < 0.5 ? "Male" : "Female";
-  const pool = BUILD_DATA.names[race][gender.toLowerCase()];
-  const name = pool[Math.floor(Math.random() * pool.length)];
+  const gender = customGender || (Math.random() < 0.5 ? "Male" : "Female");
+  let name = customName;
+  if (!name) {
+    const pool = BUILD_DATA.names[race][gender.toLowerCase()];
+    name = pool[Math.floor(Math.random() * pool.length)];
+  }
   setItems("character", [{ name, description: gender + " " + race }]);
 }
 
@@ -697,6 +707,114 @@ function modalHintFor(catId) {
   return "Click options to add them, or click a highlighted one to remove it — this card carries " + capacity + ".";
 }
 
+// The character editor: a name field (with a 🎲 for a fresh lore name) and a
+// Male/Female toggle, plus Randomize to hand both back to the Divines. Reuses
+// the options-modal shell (close button, overlay click and Escape already work).
+function openCharacterModal() {
+  const char = state.character.items[0];
+  const gender = char.description.startsWith("Female") ? "Female" : "Male";
+  document.getElementById("modal-title").textContent = "Character — name & sex";
+  const hint = document.getElementById("modal-hint");
+  hint.textContent = "Name your hero and choose their sex — or leave it to the Divines.";
+  hint.className = "modal-hint";
+  const body = document.getElementById("modal-body");
+  body.innerHTML = "";
+
+  // The sex to use right now: an explicit override, else whatever the card
+  // already shows (so editing the name never re-randomizes the sex).
+  const shownGender = () =>
+    customGender || (state.character.items[0].description.startsWith("Female") ? "Female" : "Male");
+
+  // Rebuild the card from the current overrides and refresh the page behind
+  // the modal, leaving the modal DOM in place so the name field keeps focus.
+  const apply = () => {
+    const g = shownGender();
+    const race = state.race.items[0].name;
+    let name = customName;
+    if (!name) {
+      const pool = BUILD_DATA.names[race][g.toLowerCase()];
+      name = pool[Math.floor(Math.random() * pool.length)];
+    }
+    setItems("character", [{ name, description: g + " " + race }]);
+    narrativeText = buildNarrative();
+    render();
+  };
+
+  // --- Name field + 🎲 ---
+  const nameLabel = document.createElement("p");
+  nameLabel.className = "char-field-label";
+  nameLabel.textContent = "Name";
+  body.appendChild(nameLabel);
+
+  const nameRow = document.createElement("div");
+  nameRow.className = "char-name-row";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "char-name-input";
+  input.value = char.name;
+  input.placeholder = "Roll a random name";
+  input.setAttribute("aria-label", "Character name");
+  input.addEventListener("input", () => {
+    customName = input.value.trim() || null;
+    apply();
+  });
+  const diceBtn = document.createElement("button");
+  diceBtn.type = "button";
+  diceBtn.className = "icon-btn char-dice";
+  diceBtn.title = "Roll a random name";
+  diceBtn.setAttribute("aria-label", "Roll a random name");
+  diceBtn.textContent = "\u{1F3B2}"; // 🎲
+  diceBtn.addEventListener("click", () => {
+    const pool = BUILD_DATA.names[state.race.items[0].name][shownGender().toLowerCase()];
+    customName = pool[Math.floor(Math.random() * pool.length)];
+    input.value = customName;
+    apply();
+  });
+  nameRow.append(input, diceBtn);
+  body.appendChild(nameRow);
+
+  // --- Gender toggle ---
+  const genderLabel = document.createElement("p");
+  genderLabel.className = "char-field-label";
+  genderLabel.textContent = "Sex";
+  body.appendChild(genderLabel);
+
+  const genderRow = document.createElement("div");
+  genderRow.className = "char-gender-row";
+  for (const g of ["Male", "Female"]) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "char-gender-btn" + (g === gender ? " active" : "");
+    btn.textContent = g;
+    btn.addEventListener("click", () => {
+      customGender = g;
+      apply();
+      for (const sib of genderRow.children) sib.classList.toggle("active", sib === btn);
+      if (!customName) input.value = state.character.items[0].name;
+    });
+    genderRow.appendChild(btn);
+  }
+  body.appendChild(genderRow);
+
+  // --- Randomize both ---
+  const randomBtn = document.createElement("button");
+  randomBtn.type = "button";
+  randomBtn.className = "char-random-btn";
+  randomBtn.textContent = "\u{1F3B2} Randomize";
+  randomBtn.title = "Roll a random name and sex";
+  randomBtn.addEventListener("click", () => {
+    customName = null;
+    customGender = null;
+    rollCharacter(); // a true random roll — sex included — now that nothing is pinned
+    narrativeText = buildNarrative();
+    render();
+    openCharacterModal();
+  });
+  body.appendChild(randomBtn);
+
+  document.getElementById("modal-overlay").classList.remove("hidden");
+}
+
 function openOptionsModal(cat, notice) {
   const max = MAX_PICKS[cat.id] || 1;
   document.getElementById("modal-title").textContent =
@@ -751,7 +869,16 @@ function render() {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
-    if (cat.id !== "character") {
+    if (cat.id === "character") {
+      // The character card has an editor (name + sex) instead of an options list.
+      const editBtn = document.createElement("button");
+      editBtn.className = "icon-btn";
+      editBtn.title = "Edit name & sex";
+      editBtn.setAttribute("aria-label", "Edit character name and sex");
+      editBtn.textContent = "\u{270F}\u{FE0F}"; // ✏️
+      editBtn.addEventListener("click", () => openCharacterModal());
+      actions.append(editBtn);
+    } else {
       const optionsBtn = document.createElement("button");
       optionsBtn.className = "icon-btn";
       optionsBtn.title = "View all " + cat.label + " options";
