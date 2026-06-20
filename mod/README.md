@@ -28,6 +28,9 @@ You also receive the lesser power **"Buildnator: Destiny"**:
 - If you picked *Not now* at the start, cast it to open the wizard later.
 - After accepting a build, cast it to re-read your destiny — or roll a new one.
 
+For a full step-by-step walkthrough of every menu, category, and rule see the
+[Player's Guide](../docs/GUIDE.md).
+
 ## How it works
 
 - **Roll my fate** — rolls everything in the same dependency order as the
