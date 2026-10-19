@@ -51,7 +51,7 @@ String[] Function StoneDescs() Global
     a[4] = "+50 armor rating and 25% magic resistance."
     a[5] = "Health and stamina regenerate 25% faster."
     a[6] = "+100 carry weight, no armor speed penalty."
-    a[7] = "Double magicka regen — but double weakness to magic."
+    a[7] = "Double magicka regen - but double weakness to magic."
     a[8] = "+50 magicka, 50% spell absorption, no magicka regen."
     a[9] = "Once a day, raise all nearby corpses to fight for you."
     a[10] = "Once a day, paralyze and poison a target."
@@ -73,7 +73,7 @@ EndFunction
 String[] Function MoralityDescs() Global
     String[] a = new String[5]
     a[0] = "Never steal, never kill innocents, help everyone in need."
-    a[1] = "Do the right thing — but coin is coin."
+    a[1] = "Do the right thing - but coin is coin."
     a[2] = "Look out for yourself. The war isn't your problem."
     a[3] = "Steal when convenient, help only when it pays."
     a[4] = "Skyrim is prey. Take what you want, burn the rest."
@@ -201,14 +201,14 @@ String[] Function StyleDescs() Global
     a[0] = "The classic. Block, bash, stab, repeat."
     a[1] = "Two weapons, zero defense, maximum carnage."
     a[2] = "Big weapon. Big swings. Big problems for everyone else."
-    a[3] = "Death from a distance — preferably while sneaking."
+    a[3] = "Death from a distance - preferably while sneaking."
     a[4] = "Fire, frost, and shock until nothing moves."
     a[5] = "Let your minions do the dirty work."
     a[6] = "Fists only. Khajiit claws optional but recommended."
     a[7] = "30x dagger multipliers are a lifestyle."
     a[8] = "Weapon in one hand, spell in the other."
     a[9] = "FUS RO DAH is always the answer. Lead with the Voice."
-    a[10] = "No doctrine, no dogma — use whatever wins the fight."
+    a[10] = "No doctrine, no dogma - use whatever wins the fight."
     Return a
 EndFunction
 
@@ -346,19 +346,19 @@ String[] Function ArchDescs() Global
     a[1] = "Why swing a sword when reality itself obeys you?"
     a[2] = "If it isn't nailed down, it's yours."
     a[3] = "Heavy armor in one hand, devastation in the other."
-    a[4] = "A blade backed by spellcraft — versatile and deadly."
+    a[4] = "A blade backed by spellcraft - versatile and deadly."
     a[5] = "Illusion magic and a dagger from the shadows."
     a[6] = "One target, one strike, no witnesses."
     a[7] = "If they can see you, you're doing it wrong. Loose from afar."
-    a[8] = "A holy warrior — restoration magic, heavy armor, no mercy for the undead."
-    a[9] = "Death is not the end — it's the recruitment process."
+    a[8] = "A holy warrior - restoration magic, heavy armor, no mercy for the undead."
+    a[9] = "Death is not the end - it's the recruitment process."
     a[10] = "No armor crafting, no finesse. Hit things until they stop moving."
     a[11] = "Fists, robes, and inner peace (delivered at high velocity)."
     a[12] = "Crossbow or bow, alchemy, and a grudge against everything magical."
-    a[13] = "Charm, speechcraft, illusion — talk your way through Skyrim."
+    a[13] = "Charm, speechcraft, illusion - talk your way through Skyrim."
     a[14] = "A wanderer visiting every shrine, surviving on wit and faith."
     a[15] = "Stendarr's hammer made flesh. Smite the profane wherever it hides."
-    a[16] = "Oath, honor, and a full set of plate. Chivalry isn't dead — you checked."
+    a[16] = "Oath, honor, and a full set of plate. Chivalry isn't dead - you checked."
     a[17] = "Bow, light armor, and the wilds for a home. Cities make you itch."
     a[18] = "Track it, trap it, skin it, sell it. Hircine watches with approval."
     a[19] = "Alchemy, alteration, and a deep distrust of anyone who lives indoors."
@@ -368,7 +368,7 @@ String[] Function ArchDescs() Global
     a[23] = "Born for the pit. Every bandit camp is an arena, every fight a show."
     a[24] = "A pirate stranded ashore. Loot coastal wrecks, drink mead, fear no man."
     a[25] = "Poison the blade, drink the experiment, sell the leftovers."
-    a[26] = "A pacifist mender. Your allies do the killing — you keep them alive."
+    a[26] = "A pacifist mender. Your allies do the killing - you keep them alive."
     a[27] = "First in, never seen, already gone. The map fills itself."
     a[28] = "Every barrow has a hidden chest, and you have a shovel and no fear."
     a[29] = "Enchanting, alteration, and polite contempt for the Jarl's guests."
@@ -631,9 +631,9 @@ String[] Function DeityDescs() Global
     a[6] = "God of work and commerce."
     a[7] = "God of wisdom and logic."
     a[8] = "God of the cycle of life and death."
-    a[9] = "Daedric Prince of night and luck — patron of thieves."
-    a[10] = "Daedric Prince of life — sworn enemy of the undead."
-    a[11] = "Daedric Prince of the Hunt — father of werebeasts."
+    a[9] = "Daedric Prince of night and luck - patron of thieves."
+    a[10] = "Daedric Prince of life - sworn enemy of the undead."
+    a[11] = "Daedric Prince of the Hunt - father of werebeasts."
     a[12] = "Daedric Prince of plots, lies, and webs."
     Return a
 EndFunction
@@ -672,7 +672,7 @@ String[] Function FactionDescs() Global
     a[5] = "Skyrim belongs to the Nords!"
     a[6] = "Vampire hunters with very large crossbows."
     a[7] = "Embrace the night. Become the monster."
-    a[8] = "Poems, drums, flutes — and the occasional tomb raid."
+    a[8] = "Poems, drums, flutes - and the occasional tomb raid."
     a[9] = "A lone wanderer. Factions are for people with friends."
     Return a
 EndFunction
@@ -730,7 +730,7 @@ String[] Function AfflictionDescs() Global
     String[] a = new String[4]
     a[0] = "A pure mortal. Sleep at night, walk in the sun, keep your soul."
     a[1] = "The blood of Hircine runs in your veins. Beast Form when the hunt calls."
-    a[2] = "A creature of the night. Feed regularly — or stop pretending to be one of them."
+    a[2] = "A creature of the night. Feed regularly - or stop pretending to be one of them."
     a[3] = "Accept Harkon's gift. Float menacingly, drain life, rule the night (Dawnguard)."
     Return a
 EndFunction
@@ -784,31 +784,31 @@ EndFunction
 
 String[] Function RuleDescs() Global
     String[] a = new String[25]
-    a[0] = "Fast travel is for cowards — walk, ride, or take the carriage everywhere."
+    a[0] = "Fast travel is for cowards - walk, ride, or take the carriage everywhere."
     a[1] = "Find a bed before midnight, every single night."
-    a[2] = "Breakfast, lunch, dinner — three meals a day, no skipping."
+    a[2] = "Breakfast, lunch, dinner - three meals a day, no skipping."
     a[3] = "Never steal. Not even that sweetroll."
     a[4] = "If it has value, it goes in the bag. Yes, all of it."
     a[5] = "Never loot a corpse. Grave-robbing is beneath you."
     a[6] = "No meat. Cabbage soup forever."
     a[7] = "Never turn down a bounty or honest mercenary work."
-    a[8] = "Buy or find your gear — no smithing, alchemy, or enchanting."
+    a[8] = "Buy or find your gear - no smithing, alchemy, or enchanting."
     a[9] = "Only use weapons and armor you crafted yourself."
     a[10] = "Always travel with a follower. Never adventure solo."
     a[11] = "Never use carriages. Your own two feet (or hooves) only."
     a[12] = "Visit your home (or the inn you call home) every in-game week."
     a[13] = "Never kill wildlife. Run from wolves if you must."
     a[14] = "Visit and pray at every shrine you encounter."
-    a[15] = "Your veins carry no magicka of your own — every spell must come from a staff or scroll."
-    a[16] = "Potions churn your guts — no drinking them; healing and buffs come from food alone."
-    a[17] = "When night falls you freeze up — wait, sleep, or sit by a fire until dawn before doing anything."
+    a[15] = "Your veins carry no magicka of your own - every spell must come from a staff or scroll."
+    a[16] = "Potions churn your guts - no drinking them; healing and buffs come from food alone."
+    a[17] = "When night falls you freeze up - wait, sleep, or sit by a fire until dawn before doing anything."
     a[18] = "Magic is a trick you want no part of: no spells, no scrolls, no staffs, no enchanted gear."
-    a[19] = "If it's metal, it must be iron — weapons and armor of iron (or hide and leather) only."
-    a[20] = "Never sell anything — your coin comes from quest rewards and what you find."
+    a[19] = "If it's metal, it must be iron - weapons and armor of iron (or hide and leather) only."
+    a[20] = "Never sell anything - your coin comes from quest rewards and what you find."
     a[21] = "No followers, no companions, no pets. You walk alone."
-    a[22] = "Daedra are abominations — never use, carry, or craft Daedric weapons, armor, or artifacts, and destroy them where you find them."
-    a[23] = "Talos is no god. Be ruthless to his worshippers — kill or report them, confiscate every Amulet of Talos, never pray at his shrines, side against the Stormcloaks, and sneer at Nord traditions."
-    a[24] = "Thin blood, weak heart — your stamina is a flicker (10). Sprint in heartbeats, not minutes, and ration every power attack."
+    a[22] = "Daedra are abominations - never use, carry, or craft Daedric weapons, armor, or artifacts, and destroy them where you find them."
+    a[23] = "Talos is no god. Be ruthless to his worshippers - kill or report them, confiscate every Amulet of Talos, never pray at his shrines, side against the Stormcloaks, and sneer at Nord traditions."
+    a[24] = "Thin blood, weak heart - your stamina is a flicker (10). Sprint in heartbeats, not minutes, and ration every power attack."
     Return a
 EndFunction
 
@@ -934,6 +934,666 @@ String[] Function RuleConflictGroups() Global
     a[2] = "Never Alone|Lone Wolf"
     a[3] = "Devout|Thalmor Sympathizer"
     Return a
+EndFunction
+
+String[] Function RaceDescs() Global
+    String[] a = new String[10]
+    a[0] = "Children of the Sky - resistant to frost, born to battle."
+    a[1] = "Diplomats and traders, with a knack for finding coin."
+    a[2] = "Innate resistance to magic and a talent for conjuration."
+    a[3] = "The most naturally talented warriors in Tamriel."
+    a[4] = "High Elves - gifted in the arcane arts, extra magicka."
+    a[5] = "Wood Elves - masters of bow and stealth."
+    a[6] = "Dark Elves - fire-resistant, balanced in blade and spell."
+    a[7] = "Orcs - fearsome berserkers and master smiths."
+    a[8] = "Lizard-folk - waterbreathing, disease-resistant, slippery."
+    a[9] = "Feline nomads - night eyes and deadly claws."
+    Return a
+EndFunction
+
+String[] Function WeaponDescs() Global
+    String[] a = new String[11]
+    a[0] = "Fast, reliable, classic."
+    a[1] = "Make them bleed."
+    a[2] = "Armor means nothing to you."
+    a[3] = "Elegant, enormous, exhausting."
+    a[4] = "For when subtlety is not on the menu."
+    a[5] = "The biggest, slowest, most satisfying option."
+    a[6] = "Small blade, huge sneak multipliers."
+    a[7] = "The ol' reliable of Skyrim."
+    a[8] = "Slow to reload, brutal on impact (Dawnguard)."
+    a[9] = "Channel destruction without lifting a spellbook."
+    a[10] = "Weapons are a crutch."
+    Return a
+EndFunction
+
+String[] Function ArmorDescs() Global
+    String[] a = new String[4]
+    a[0] = "Walk slow, hit hard, fear nothing."
+    a[1] = "Mobility and protection in balance."
+    a[2] = "Enchanted cloth - your magicka is your armor."
+    a[3] = "No armor at all. Fashion over function. Good luck."
+    Return a
+EndFunction
+
+String[] Function SchoolDescs() Global
+    String[] a = new String[5]
+    a[0] = "Flames, frostbite, sparks - applied liberally."
+    a[1] = "Summon atronachs, raise the dead, bind weapons."
+    a[2] = "Fury, fear, calm, invisibility - the puppeteer's school."
+    a[3] = "Mage armor, paralysis, and bending the rules of reality."
+    a[4] = "Heal yourself, ward off spells, turn the undead."
+    Return a
+EndFunction
+
+String[] Function StyleReqWeaponName() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = "Fists"
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqWeaponSkill() Global
+    String[] a = new String[11]
+    a[0] = "One-Handed"
+    a[1] = "One-Handed"
+    a[2] = "Two-Handed"
+    a[3] = "Archery"
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = "One-Handed"
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqWeaponSkillIn() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqSkill() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = "Destruction"
+    a[5] = "Conjuration"
+    a[6] = ""
+    a[7] = "Sneak"
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqSkillIn() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqExcludeSkills() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = "One-Handed|Two-Handed|Archery"
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqMagicSchool() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = "Destruction"
+    a[5] = "Conjuration"
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+String[] Function StyleReqMagicSchoolIn() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+Bool[] Function StyleReqAnyMagic() Global
+    Bool[] a = new Bool[11]
+    a[8] = True
+    Return a
+EndFunction
+
+String[] Function StyleReqArmorIn() Global
+    String[] a = new String[11]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    Return a
+EndFunction
+
+Bool[] Function StyleReqDragonborn() Global
+    Bool[] a = new Bool[11]
+    a[9] = True
+    Return a
+EndFunction
+
+String[] Function ArchReqWeaponName() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    a[11] = "Fists"
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = ""
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqWeaponSkill() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = ""
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqWeaponSkillIn() Global
+    String[] a = new String[31]
+    a[0] = "One-Handed|Two-Handed"
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = "One-Handed"
+    a[5] = ""
+    a[6] = ""
+    a[7] = "Archery"
+    a[8] = ""
+    a[9] = ""
+    a[10] = "Two-Handed"
+    a[11] = ""
+    a[12] = "Archery"
+    a[13] = ""
+    a[14] = ""
+    a[15] = "One-Handed|Two-Handed"
+    a[16] = "One-Handed|Two-Handed"
+    a[17] = "Archery"
+    a[18] = "Archery"
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = "One-Handed|Two-Handed"
+    a[23] = "One-Handed|Two-Handed"
+    a[24] = "One-Handed"
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqSkill() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = ""
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqSkillIn() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = "Sneak|Pickpocket|Lockpicking"
+    a[3] = ""
+    a[4] = ""
+    a[5] = "Sneak"
+    a[6] = "Sneak"
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = "Speech"
+    a[14] = ""
+    a[15] = ""
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = "Alchemy|Alteration"
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = "Alchemy"
+    a[26] = ""
+    a[27] = "Sneak|Light Armor"
+    a[28] = "Lockpicking"
+    a[29] = "Enchanting|Alteration|Illusion"
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqExcludeSkills() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = ""
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqMagicSchool() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = "Restoration"
+    a[9] = "Conjuration"
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = "Restoration"
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = "Restoration"
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+String[] Function ArchReqMagicSchoolIn() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = ""
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = ""
+    a[9] = ""
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = ""
+    a[16] = ""
+    a[17] = ""
+    a[18] = ""
+    a[19] = ""
+    a[20] = "Conjuration|Restoration"
+    a[21] = "Conjuration|Destruction"
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = ""
+    Return a
+EndFunction
+
+Bool[] Function ArchReqAnyMagic() Global
+    Bool[] a = new Bool[31]
+    a[1] = True
+    a[3] = True
+    a[4] = True
+    a[5] = True
+    a[29] = True
+    Return a
+EndFunction
+
+String[] Function ArchReqArmorIn() Global
+    String[] a = new String[31]
+    a[0] = ""
+    a[1] = ""
+    a[2] = ""
+    a[3] = "Heavy Armor"
+    a[4] = ""
+    a[5] = ""
+    a[6] = ""
+    a[7] = ""
+    a[8] = "Heavy Armor"
+    a[9] = ""
+    a[10] = ""
+    a[11] = ""
+    a[12] = ""
+    a[13] = ""
+    a[14] = ""
+    a[15] = ""
+    a[16] = "Heavy Armor"
+    a[17] = "Light Armor"
+    a[18] = ""
+    a[19] = ""
+    a[20] = ""
+    a[21] = ""
+    a[22] = ""
+    a[23] = ""
+    a[24] = ""
+    a[25] = ""
+    a[26] = ""
+    a[27] = ""
+    a[28] = ""
+    a[29] = ""
+    a[30] = "Light Armor|Clothes Only"
+    Return a
+EndFunction
+
+Bool[] Function ArchReqDragonborn() Global
+    Bool[] a = new Bool[31]
+    Return a
+EndFunction
+
+String[] Function NarrOpenings() Global
+    String[] a = new String[3]
+    a[0] = "{name} was born {origin}."
+    a[1] = "Born {origin}, {name} learned early that destiny favors the bold."
+    a[2] = "{name} first drew breath {origin}, beneath omens no priest could read."
+    Return a
+EndFunction
+
+String[] Function NarrPaths() Global
+    String[] a = new String[3]
+    a[0] = "The long road of the {archetype} shaped {obj}, honing {skills} through lean years and worse company."
+    a[1] = "Trained as a {archetype}, {sub} earned every scar while mastering {skills}."
+    a[2] = "Life as a {archetype} came at a price - one paid in full while learning {skills}."
+    Return a
+EndFunction
+
+String[] Function NarrCreeds() Global
+    String[] a = new String[3]
+    a[0] = "Under the sign of {stone}, {sub} trusts {weapon} above all, and {style} is less a tactic than a creed."
+    a[1] = "Blessed by {stone}, {sub} settles most arguments with {weapon} - {style}, always."
+    a[2] = "{stone} watches over {obj}; {weapon} does the talking, and {style} writes the ending."
+    Return a
+EndFunction
+
+String[] Function NarrDragonborn() Global
+    String[] a = new String[2]
+    a[0] = "But the truth burns deeper still: {sub} is Dragonborn, and when {sub} Shouts, the very mountains answer."
+    a[1] = "And beneath it all sleeps a secret the Greybeards already whisper - {name} is Dovahkiin, born with the dragon's blood."
+    Return a
+EndFunction
+
+String[] Function NarrFates() Global
+    String[] a = new String[2]
+    a[0] = "Sworn to {deity} and bound for {faction}, {sub} {moral}"
+    a[1] = "With {deity}'s name on {pos} lips and an oath owed to {faction}, {sub} {moral}"
+    Return a
+EndFunction
+
+String[] Function NarrFatesAlone() Global
+    String[] a = new String[2]
+    a[0] = "Sworn to no banner, trusting only {deity}, {sub} {moral}"
+    a[1] = "No guild holds {pos} oath; only {deity} hears {pos} prayers, and {sub} {moral}"
+    Return a
+EndFunction
+
+String Function NarrOrigin(String aKey) Global
+    If aKey == "Nord"
+        Return "under the bitter skies of Skyrim"
+    EndIf
+    If aKey == "Imperial"
+        Return "amid the bustle of Cyrodiil's great cities"
+    EndIf
+    If aKey == "Breton"
+        Return "in the feuding courts of High Rock"
+    EndIf
+    If aKey == "Redguard"
+        Return "on the scorched sands of Hammerfell"
+    EndIf
+    If aKey == "Altmer"
+        Return "in the gilded spires of the Summerset Isles"
+    EndIf
+    If aKey == "Bosmer"
+        Return "beneath the ancient boughs of Valenwood"
+    EndIf
+    If aKey == "Dunmer"
+        Return "in the ash-choked wastes of Morrowind"
+    EndIf
+    If aKey == "Orsimer"
+        Return "behind the palisades of an Orc stronghold"
+    EndIf
+    If aKey == "Argonian"
+        Return "among the misty marshes of Black Marsh"
+    EndIf
+    If aKey == "Khajiit"
+        Return "in a trade caravan crossing the deserts of Elsweyr"
+    EndIf
+    Return ""
+EndFunction
+
+String Function NarrAffliction(String aKey) Global
+    If aKey == "Werewolf"
+        Return "And when the moons rise, Hircine's blood howls in {pos} veins."
+    EndIf
+    If aKey == "Vampire"
+        Return "Since one cold night went wrong, {sub} thirsts in silence and keeps to the shadows before dawn."
+    EndIf
+    If aKey == "Vampire Lord"
+        Return "Harkon's gift runs in {pos} veins now - and the night kneels to its new lord."
+    EndIf
+    Return ""
+EndFunction
+
+String Function NarrMoral(String aKey) Global
+    If aKey == "Saint"
+        Return "walks Skyrim as its quiet conscience."
+    EndIf
+    If aKey == "Good"
+        Return "tries to leave the world a little better - for a fair price."
+    EndIf
+    If aKey == "Neutral"
+        Return "owes nothing to anyone, and intends to keep it that way."
+    EndIf
+    If aKey == "Selfish"
+        Return "looks after number one; everyone else can hire a guard."
+    EndIf
+    If aKey == "Evil"
+        Return "leaves burned villages and empty pockets in {pos} wake."
+    EndIf
+    Return ""
+EndFunction
+
+String Function DataHash() Global
+    Return "3750ea8784"
 EndFunction
 
 String Function PickName(String aRace, Bool abFemale) Global

@@ -1,6 +1,6 @@
 ScriptName BLD_Enforcer extends ReferenceAlias
 {Buildnator player-alias script: enforces the accepted build's roleplay rules.
-Configure() is called by BLD_Main when the build is applied (and again on re-rolls).}
+Configure() is called by BLD_Build when the build is applied (and again on re-rolls).}
 
 ; --- Properties filled by the esp generator (names must match Program.cs) ---
 Spell Property AbNoMagicka Auto      ; constant: magicka floor (Born without magicka)
@@ -62,7 +62,7 @@ Bool ExhaustedActive
 Bool HungryActive
 
 Bool Function HasRule(String asName)
-    Return ActiveRules && BLD_Roller.Contains(ActiveRules, asName)
+    Return ActiveRules && BLD_Build.Contains(ActiveRules, asName)
 EndFunction
 
 Function Configure(String[] rules)
