@@ -34,9 +34,14 @@ if ($LASTEXITCODE -ne 0) { throw "esp generator failed" }
 Write-Host "== papyrus compile ==" -ForegroundColor Cyan
 $compiler = Join-Path $gameDir "Papyrus Compiler\PapyrusCompiler.exe"
 $gameSources = Join-Path $gameDir "Data\Source\Scripts"
-# Source\Imports holds compile-time-only declarations (SKSE natives) - they are
-# imported but never compiled to pex, so SKSE's own runtime scripts stay intact.
-$imports = "$(Join-Path $modRoot 'Source\Imports');$(Join-Path $modRoot 'Source\Scripts');$(Join-Path $modRoot 'generated');$gameSources"
+# SKSE's script sources must shadow the vanilla ones (they add natives such as
+# StringUtil.Split and Utility.CreateIntArray).
+$skseSources = Join-Path $gameDir "Data\Scripts\Source"
+if (-not (Test-Path (Join-Path $skseSources "SKSE.psc"))) { throw "SKSE script sources not found in $skseSources" }
+# Source\Imports holds compile-time-only declarations (the SkyUI SDK's SKI_*
+# scripts) - imported but never compiled to pex; SkyUI ships the real ones.
+$imports = "$(Join-Path $modRoot 'Source\Imports');$(Join-Path $modRoot 'Source\Scripts');$(Join-Path $modRoot 'generated');$skseSources;$gameSources"
+if (-not (Test-Path $compiler)) { throw "Papyrus compiler not found at $compiler - install the Creation Kit from Steam." }
 
 $sources = @(Get-ChildItem (Join-Path $modRoot "Source\Scripts") -Filter *.psc)
 $sources += @(Get-ChildItem (Join-Path $modRoot "generated") -Filter *.psc -ErrorAction SilentlyContinue)
@@ -50,9 +55,18 @@ foreach ($psc in $sources) {
 if (-not $NoDeploy) {
     Write-Host "== deploy ==" -ForegroundColor Cyan
     $dataDir = Join-Path $gameDir "Data"
+    # One-time backup of whatever Buildnator files are installed (v1) before
+    # the first v2 deploy overwrites them.
+    $backup = Join-Path $modRoot "backup-installed"
+    if (-not (Test-Path $backup) -and (Test-Path (Join-Path $dataDir "Buildnator.esp"))) {
+        New-Item -ItemType Directory -Force (Join-Path $backup "Scripts") | Out-Null
+        Copy-Item (Join-Path $dataDir "Buildnator.esp") $backup
+        Copy-Item (Join-Path $dataDir "Scripts\BLD_*.pex") (Join-Path $backup "Scripts")
+        Write-Host "  backed up installed files to $backup"
+    }
     Copy-Item $esp $dataDir -Force
     New-Item -ItemType Directory -Force (Join-Path $dataDir "Scripts") | Out-Null
-    Copy-Item (Join-Path $scriptsOut "*.pex") (Join-Path $dataDir "Scripts") -Force
+    Copy-Item (Join-Path $scriptsOut "BLD_*.pex") (Join-Path $dataDir "Scripts") -Force
     New-Item -ItemType Directory -Force (Join-Path $dataDir "Seq") | Out-Null
     Copy-Item (Join-Path $outDir "Seq\*.seq") (Join-Path $dataDir "Seq") -Force
     Write-Host "  copied to $dataDir"
@@ -78,7 +92,7 @@ if ($Zip) {
     New-Item -ItemType Directory -Force (Join-Path $stage "Scripts") | Out-Null
     New-Item -ItemType Directory -Force (Join-Path $stage "Seq") | Out-Null
     Copy-Item $esp $stage
-    Copy-Item (Join-Path $scriptsOut "*.pex") (Join-Path $stage "Scripts")
+    Copy-Item (Join-Path $scriptsOut "BLD_*.pex") (Join-Path $stage "Scripts")
     Copy-Item (Join-Path $outDir "Seq\*.seq") (Join-Path $stage "Seq")
     $distDir = Join-Path (Split-Path $modRoot) "dist"
     New-Item -ItemType Directory -Force $distDir | Out-Null

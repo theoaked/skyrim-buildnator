@@ -5,5 +5,5 @@ to the main quest.}
 Quest Property MainQuest Auto
 
 Event OnEffectStart(Actor akTarget, Actor akCaster)
-    (MainQuest as BLD_Main).OnPowerUsed()
+    (MainQuest as BLD_Build).OnPowerUsed()
 EndEvent

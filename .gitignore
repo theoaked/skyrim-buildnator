@@ -3,3 +3,4 @@ mod/out/
 mod/Generator/bin/
 mod/Generator/obj/
 dist/
+mod/backup-installed/

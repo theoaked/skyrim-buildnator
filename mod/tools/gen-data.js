@@ -32,7 +32,13 @@ const { BUILD_DATA: D, CONSOLE_DATA: C, SKILL_LEVEL } = loadGlobals();
 
 // ---------- Papyrus emission helpers ----------
 
-const esc = (s) => String(s).replace(/"/g, "'");
+// Skyrim's UI fonts lack typographic punctuation; fold it to ASCII.
+const esc = (s) => String(s)
+  .replace(/"/g, "'")
+  .replace(/\s*—\s*/g, " - ")
+  .replace(/[‘’]/g, "'")
+  .replace(/[“”]/g, "'")
+  .replace(/…/g, "...");
 const pipe = (arr) => (arr || []).join("|");
 
 function stringArrayFn(name, values) {
@@ -169,6 +175,53 @@ out.push(...stringArrayFn("RuleIncompatFactions", D.roleplayRules.map((r) => pip
 // Conflict groups (pipe-joined; two names conflict when both live in a group)
 out.push(...stringArrayFn("SkillConflictGroups", D.skillConflicts.map(pipe)));
 out.push(...stringArrayFn("RuleConflictGroups", D.ruleConflicts.map(pipe)));
+
+// ---------- v2 (MCM) additions ----------
+
+// Descriptions for every pool the MCM shows (info text on highlight).
+out.push(...stringArrayFn("RaceDescs", D.race.map((r) => r.description)));
+out.push(...stringArrayFn("WeaponDescs", D.weapon.map((w) => w.description)));
+out.push(...stringArrayFn("ArmorDescs", D.armor.map((a) => a.description)));
+out.push(...stringArrayFn("SchoolDescs", D.magicSchools.map((s) => s.description)));
+
+// Unified `requires` vocabulary for combat styles and archetypes - the same
+// fields app.js fitsBuild() reads, so one Papyrus FitsReq() serves both.
+for (const [prefix, pool] of [["StyleReq", D.combatStyle], ["ArchReq", D.archetype]]) {
+  const r = (e) => e.requires || {};
+  out.push(...stringArrayFn(prefix + "WeaponName", pool.map((e) => r(e).weaponName || "")));
+  out.push(...stringArrayFn(prefix + "WeaponSkill", pool.map((e) => r(e).weaponSkill || "")));
+  out.push(...stringArrayFn(prefix + "WeaponSkillIn", pool.map((e) => pipe(r(e).weaponSkillIn))));
+  out.push(...stringArrayFn(prefix + "Skill", pool.map((e) => r(e).skill || "")));
+  out.push(...stringArrayFn(prefix + "SkillIn", pool.map((e) => pipe(r(e).skillIn))));
+  out.push(...stringArrayFn(prefix + "ExcludeSkills", pool.map((e) => pipe(r(e).excludeSkills))));
+  out.push(...stringArrayFn(prefix + "MagicSchool", pool.map((e) => r(e).magicSchool || "")));
+  out.push(...stringArrayFn(prefix + "MagicSchoolIn", pool.map((e) => pipe(r(e).magicSchoolIn))));
+  out.push(...boolArrayFn(prefix + "AnyMagic", pool.map((e) => r(e).anyMagic)));
+  out.push(...stringArrayFn(prefix + "ArmorIn", pool.map((e) => pipe(r(e).armorIn))));
+  out.push(...boolArrayFn(prefix + "Dragonborn", pool.map((e) => r(e).dragonborn)));
+}
+
+// Narrative templates (placeholders are filled by BLD_Build.FillTemplate).
+{
+  const N = D.narrative;
+  out.push(...stringArrayFn("NarrOpenings", N.openings));
+  out.push(...stringArrayFn("NarrPaths", N.paths));
+  out.push(...stringArrayFn("NarrCreeds", N.creeds));
+  out.push(...stringArrayFn("NarrDragonborn", N.dragonborn));
+  out.push(...stringArrayFn("NarrFates", N.fates));
+  out.push(...stringArrayFn("NarrFatesAlone", N.fatesAlone));
+  out.push(...lookupFn("NarrOrigin", N.origins));
+  out.push(...lookupFn("NarrAffliction", N.afflictions));
+  out.push(...lookupFn("NarrMoral", N.morals));
+}
+
+// Fingerprint of the site data this layer was built from; the oracle check
+// (tools/check-oracle.js) refuses logs made from a different data.js.
+{
+  const hash = require("crypto").createHash("sha1")
+    .update(fs.readFileSync(path.join(repo, "js", "data.js"))).digest("hex").slice(0, 10);
+  out.push("String Function DataHash() Global", `    Return "${hash}"`, "EndFunction", "");
+}
 
 // ---------- Name pools ----------
 // PickName rolls gender-appropriate lore names for a race.
